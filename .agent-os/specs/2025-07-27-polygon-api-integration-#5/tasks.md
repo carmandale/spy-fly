@@ -14,12 +14,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.4 Implement secure API key validation on startup
   - [x] 1.5 Verify all tests pass for configuration management
 
-- [ ] 2. Database Schema Implementation
-  - [ ] 2.1 Write tests for database schema creation and migration
-  - [ ] 2.2 Create Alembic migration for market data tables
-  - [ ] 2.3 Implement SQLAlchemy models for cache, quotes, options, and historical data
-  - [ ] 2.4 Add database connection and session management
-  - [ ] 2.5 Verify all tests pass for database operations
+- [x] 2. Database Schema Implementation
+  - [x] 2.1 Write tests for database schema creation and migration
+  - [x] 2.2 Create Alembic migration for market data tables
+  - [x] 2.3 Implement SQLAlchemy models for cache, quotes, options, and historical data
+  - [x] 2.4 Add database connection and session management
+  - [x] 2.5 Verify all tests pass for database operations
 
 - [ ] 3. Core Polygon.io API Client
   - [ ] 3.1 Write tests for PolygonDataService authentication and basic operations

@@ -1,10 +1,15 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from app.main import app
 from app.core.database import Base, get_db
+# Import all models to ensure they're registered with Base
+from app.models.db_models import (
+    MarketDataCache, SPYQuote, OptionContract, 
+    HistoricalPrice, APIRequestLog
+)
 
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -32,3 +37,25 @@ def client():
         yield test_client
     
     Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture(scope="function")
+def test_engine():
+    """Create a test engine for database schema tests."""
+    test_db_url = "sqlite:///:memory:"
+    engine = create_engine(test_db_url, connect_args={"check_same_thread": False})
+    yield engine
+    engine.dispose()
+
+
+@pytest.fixture(scope="function")
+def test_session(test_engine):
+    """Create a test session for database model tests."""
+    Base.metadata.create_all(bind=test_engine)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+    session = SessionLocal()
+    
+    yield session
+    
+    session.close()
+    Base.metadata.drop_all(bind=test_engine)

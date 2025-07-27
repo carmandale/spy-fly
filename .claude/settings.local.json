@@ -41,7 +41,9 @@
       "Bash(true)",
       "Bash(git checkout:*)",
       "Bash(python -m pytest tests/unit/test_config.py -v)",
-      "Bash(python -m pytest tests/unit/test_config.py::test_polygon_api_key_validation -v)"
+      "Bash(python -m pytest tests/unit/test_config.py::test_polygon_api_key_validation -v)",
+      "Bash(python -m pytest tests/unit/ -v)",
+      "Bash(pytest:*)"
     ],
     "deny": []
   }
