@@ -83,7 +83,7 @@ const Dashboard: React.FC = () => {
 
   const [spreadRecommendations, setSpreadRecommendations] = useState<SpreadRecommendation[]>([])
 
-  const [plData, setPLData] = useState<PLData>({
+  const [plData] = useState<PLData>({
     currentValue: 0,
     entryValue: 0,
     unrealizedPL: 0,
@@ -92,7 +92,7 @@ const Dashboard: React.FC = () => {
     alertStatus: 'none'
   })
 
-  const [historicalData, setHistoricalData] = useState<HistoricalData>({
+  const [historicalData] = useState<HistoricalData>({
     equityCurve: [],
     winRate: 0,
     avgProfitLoss: 0
@@ -189,7 +189,6 @@ const Dashboard: React.FC = () => {
   const updateMarketSession = () => {
     const now = new Date()
     const hours = now.getHours()
-    const minutes = now.getMinutes()
     
     let sessionStatus: 'pre-market' | 'open' | 'closed' = 'closed'
     let timeToClose = ''

@@ -16,7 +16,9 @@
       "Bash(gh pr create:*)",
       "Bash(afplay:*)",
       "Bash(gh issue close:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": []
   }

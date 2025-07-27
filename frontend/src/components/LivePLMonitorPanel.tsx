@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-import { TrendingUp, TrendingDown, Clock, AlertCircle } from 'lucide-react';
+import { TrendingUp, Clock, AlertCircle } from 'lucide-react';
 interface PLData {
   currentValue: number;
   entryValue: number;
