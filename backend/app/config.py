@@ -12,6 +12,14 @@ class Settings(BaseSettings):
     debug: bool = True
     cors_origins: List[str] = ["http://localhost:3000"]
     
+    # Polygon.io settings
+    polygon_api_key: str = ""
+    polygon_use_sandbox: bool = False
+    polygon_rate_limit: int = 5
+    polygon_cache_ttl_quote: int = 60
+    polygon_cache_ttl_options: int = 300
+    polygon_cache_ttl_historical: int = 3600
+    
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:

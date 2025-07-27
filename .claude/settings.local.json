@@ -11,7 +11,11 @@
       "Bash(find:*)",
       "Bash(npm create:*)",
       "Bash(npm install)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(afplay:*)",
+      "Bash(gh issue close:*)"
     ],
     "deny": []
   }
