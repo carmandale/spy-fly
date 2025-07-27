@@ -96,12 +96,12 @@ stop_by_port() {
 
 # Stop backend server
 if ! stop_by_pid_file ".backend.pid" "Backend"; then
-    stop_by_port 8000 "Backend"
+    stop_by_port 8001 "Backend"
 fi
 
 # Stop frontend server
 if ! stop_by_pid_file ".frontend.pid" "Frontend"; then
-    stop_by_port 5173 "Frontend"
+    stop_by_port 5174 "Frontend"
 fi
 
 # Clean up any orphaned log files

@@ -38,8 +38,8 @@ This project uses **uv**, the modern Python package manager that's 8-10x faster 
 ```
 
 Access the application:
-- Dashboard: http://localhost:5173
-- API Documentation: http://localhost:8000/docs
+- Dashboard: http://localhost:5174
+- API Documentation: http://localhost:8001/docs
 
 **Why uv?**
 - ⚡ 8-10x faster package installation than pip

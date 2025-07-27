@@ -34,17 +34,20 @@ print_color() {
     printf "%b%s%b\n" "$color" "$message" "$NC"
 }
 
-# Check if backend port 8000 is already in use
-if check_port 8000; then
-    print_color "$RED" "⚠️  Port 8000 is already in use. Please stop the existing process first."
-    echo "Run: lsof -ti:8000 | xargs kill -9"
+# SPY-FLY uses unique ports to avoid conflicts
+# Backend: 8001, Frontend: 5174
+
+# Check if backend port 8001 is already in use
+if check_port 8001; then
+    print_color "$RED" "⚠️  Port 8001 is already in use. Please stop the existing process first."
+    echo "Run: lsof -ti:8001 | xargs kill -9"
     exit 1
 fi
 
-# Check if frontend port 5173 is already in use
-if check_port 5173; then
-    print_color "$RED" "⚠️  Port 5173 is already in use. Please stop the existing process first."
-    echo "Run: lsof -ti:5173 | xargs kill -9"
+# Check if frontend port 5174 is already in use
+if check_port 5174; then
+    print_color "$RED" "⚠️  Port 5174 is already in use. Please stop the existing process first."
+    echo "Run: lsof -ti:5174 | xargs kill -9"
     exit 1
 fi
 
@@ -101,7 +104,7 @@ print_color "$BLUE" "Starting Backend Server..."
     fi
     
     # Start backend with exec to ensure proper signal handling
-    exec python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 > ../logs/backend.log 2>&1
+    exec python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8001 > ../logs/backend.log 2>&1
 ) &
 BACKEND_PID=$!
 
@@ -109,8 +112,8 @@ BACKEND_PID=$!
 sleep 3
 
 # Check if backend started successfully
-if check_port 8000; then
-    print_color "$GREEN" "✓ Backend server started on http://localhost:8000"
+if check_port 8001; then
+    print_color "$GREEN" "✓ Backend server started on http://localhost:8001"
 else
     print_color "$RED" "✗ Backend server failed to start. Check logs/backend.log"
     exit 1
@@ -136,8 +139,8 @@ FRONTEND_PID=$!
 sleep 5
 
 # Check if frontend started successfully
-if check_port 5173; then
-    print_color "$GREEN" "✓ Frontend server started on http://localhost:5173"
+if check_port 5174; then
+    print_color "$GREEN" "✓ Frontend server started on http://localhost:5174"
 else
     print_color "$RED" "✗ Frontend server failed to start. Check logs/frontend.log"
     # Kill backend if frontend fails
@@ -152,8 +155,8 @@ echo $FRONTEND_PID > .frontend.pid
 echo ""
 print_color "$GREEN" "🎉 SPY-FLY is running!"
 echo ""
-echo "📊 Dashboard: http://localhost:5173"
-echo "🔧 API Docs: http://localhost:8000/docs"
+echo "📊 Dashboard: http://localhost:5174"
+echo "🔧 API Docs: http://localhost:8001/docs"
 echo ""
 echo "📝 Logs:"
 echo "   Backend:  logs/backend.log"
