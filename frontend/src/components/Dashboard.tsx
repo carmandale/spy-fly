@@ -4,7 +4,7 @@ import MarketStatusBar from './MarketStatusBar'
 import SentimentPanel from './SentimentPanel'
 import RecommendedSpreadsPanel from './RecommendedSpreadsPanel'
 import LivePLMonitorPanel from './LivePLMonitorPanel'
-import { API_BASE_URL } from '../config'
+import { apiClient } from '../api/client'
 
 interface MarketData {
   spyPrice: number
@@ -101,7 +101,7 @@ const Dashboard: React.FC = () => {
   // Fetch sentiment data
   const fetchSentiment = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/sentiment/calculate`)
+      const response = await fetch(`${apiClient.baseURL}/api/v1/sentiment/calculate`)
       if (!response.ok) throw new Error('Failed to fetch sentiment')
       
       const data = await response.json()
@@ -131,15 +131,12 @@ const Dashboard: React.FC = () => {
   // Fetch market quote
   const fetchMarketQuote = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/market/quotes/SPY`)
-      if (!response.ok) throw new Error('Failed to fetch quote')
-      
-      const data = await response.json()
+      const data = await apiClient.getQuote('SPY')
       
       setMarketData(prev => ({
         ...prev,
-        spyPrice: data.last_price,
-        spyChange: data.last_price - data.prev_close
+        spyPrice: data.price,
+        spyChange: data.change_percent || 0
       }))
     } catch (err) {
       console.error('Error fetching quote:', err)
@@ -149,10 +146,9 @@ const Dashboard: React.FC = () => {
   // Fetch options data for recommendations
   const fetchOptionsData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/market/options/SPY`)
-      if (!response.ok) throw new Error('Failed to fetch options')
-      
-      const data = await response.json()
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0]
+      const data = await apiClient.getOptions('SPY', today)
       
       // Filter for 0DTE calls
       const todayExpiration = new Date().toISOString().split('T')[0]
