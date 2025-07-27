@@ -6,9 +6,11 @@ __pycache__/
 .Python
 env/
 venv/
+venv.pip-backup/
 ENV/
-.venv
+.venv/
 pip-log.txt
+uv.lock
 pip-delete-this-directory.txt
 .pytest_cache/
 .coverage

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# SPY-FLY Development Server Startup Script
-# This script starts both the backend FastAPI server and frontend React dev server
+# SPY-FLY Development Server Startup Script (Modern with uv)
+# Uses uv for Python package management following macOS best practices
 
 set -euo pipefail  # Exit on error, undefined variables, pipe failures
 
@@ -54,10 +54,11 @@ if [[ ! -f "spy-fly-prd.md" ]]; then
     exit 1
 fi
 
-# Check Python installation (prefer python3)
-if ! command -v python3 &> /dev/null; then
-    print_color "$RED" "Error: Python 3 is not installed"
-    echo "Install with: brew install python3"
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+    print_color "$RED" "Error: uv is not installed"
+    echo "Install with: brew install uv"
+    echo "Or run: ./setup-macos.sh"
     exit 1
 fi
 
@@ -76,22 +77,27 @@ print_color "$BLUE" "Starting Backend Server..."
 (
     cd backend || exit 1
     
-    # Check if venv exists
-    if [[ -d "venv" ]]; then
+    # Check if .venv exists (uv creates .venv, not venv)
+    if [[ -d ".venv" ]]; then
         # shellcheck disable=SC1091
-        source venv/bin/activate
+        source .venv/bin/activate
         # Check if uvicorn is installed
         if ! python -m pip show uvicorn &> /dev/null; then
-            echo "Installing backend dependencies..."
-            pip install --quiet --prefer-binary -r requirements.txt
+            echo "Installing backend dependencies with uv..."
+            uv pip install -r requirements.txt
         fi
+    elif [[ -d "venv" ]]; then
+        # Old pip-based venv exists, suggest migration
+        print_color "$RED" "⚠️  Old pip-based virtual environment detected"
+        echo "Run ./setup-macos.sh to migrate to uv (much faster!)"
+        exit 1
     else
-        echo "Creating Python virtual environment..."
-        python3 -m venv venv
+        echo "Creating virtual environment with uv..."
+        uv venv
         # shellcheck disable=SC1091
-        source venv/bin/activate
-        echo "Installing backend dependencies..."
-        pip install --quiet -r requirements.txt
+        source .venv/bin/activate
+        echo "Installing backend dependencies with uv..."
+        uv pip install -r requirements.txt
     fi
     
     # Start backend with exec to ensure proper signal handling

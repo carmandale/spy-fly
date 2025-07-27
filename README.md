@@ -12,7 +12,8 @@ An automated trading system for SPY 0-DTE bull-call-spread strategies, focusing 
 
 ## Tech Stack
 
-- **Backend**: FastAPI (Python 3.11 or 3.12 recommended)
+- **Backend**: FastAPI (Python 3.11+)
+- **Package Manager**: uv (modern, Rust-based, 8-10x faster than pip)
 - **Frontend**: React 18 with TypeScript and Vite
 - **Database**: SQLite with SQLAlchemy
 - **Styling**: Tailwind CSS v4
@@ -23,10 +24,10 @@ An automated trading system for SPY 0-DTE bull-call-spread strategies, focusing 
 
 ### Option 1: Local Development (Recommended for macOS)
 
-For the fastest setup on macOS:
+This project uses **uv**, the modern Python package manager that's 8-10x faster than pip and handles Apple Silicon perfectly.
 
 ```bash
-# First-time setup
+# First-time setup (installs uv if needed)
 ./setup-macos.sh
 
 # Start servers
@@ -40,11 +41,11 @@ Access the application:
 - Dashboard: http://localhost:5173
 - API Documentation: http://localhost:8000/docs
 
-**Note for macOS Users**: If using Python 3.13, initial setup may take 5-10 minutes as some packages build from source. For faster installation, use Python 3.12:
-```bash
-brew install python@3.12
-python3.12 -m venv backend/venv
-```
+**Why uv?**
+- ⚡ 8-10x faster package installation than pip
+- 🍎 Native Apple Silicon support - no more build issues
+- 🔒 Better dependency resolution and locking
+- 🚀 Modern Rust-based tooling
 
 ### Option 2: Docker (Platform Independent)
 

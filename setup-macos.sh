@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# SPY-FLY macOS Setup Script
-# Ensures proper Python environment for macOS
+# SPY-FLY macOS Setup Script (Modern Best Practices with uv)
+# Uses uv for fast, reliable Python package management
 
 set -euo pipefail
 
-echo "🔧 SPY-FLY macOS Setup"
+echo "🔧 SPY-FLY macOS Setup (Modern)"
 echo ""
 
 # Colors
@@ -30,24 +30,13 @@ if ! command -v brew &> /dev/null; then
     exit 1
 fi
 
-# Check Python version
-PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-print_color "$BLUE" "📦 Current Python version: $PYTHON_VERSION"
-
-# Warn if using Python 3.13+
-if [[ "$PYTHON_VERSION" == "3.13" ]]; then
-    print_color "$YELLOW" "⚠️  Python 3.13 detected. This is very new and may cause slow dependency installation."
-    echo "Pandas and numpy may need to build from source, which can take 10-15 minutes."
-    echo ""
-    echo "For faster installation, consider using Python 3.11 or 3.12:"
-    echo "  brew install python@3.12"
-    echo "  python3.12 -m venv backend/venv"
-    echo ""
-    read -p "Continue with Python 3.13? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+    print_color "$YELLOW" "📦 Installing uv (modern Python package manager)..."
+    brew install uv
+    print_color "$GREEN" "✅ uv installed successfully"
+else
+    print_color "$BLUE" "✅ uv is already installed"
 fi
 
 # Check architecture
@@ -58,41 +47,27 @@ else
     print_color "$BLUE" "🖥️  Intel Mac detected"
 fi
 
-# Backend setup
-print_color "$BLUE" "🐍 Setting up Python backend..."
+# Backend setup with uv
+print_color "$BLUE" "🐍 Setting up Python backend with uv..."
 cd backend
 
-# Remove old venv if switching Python versions
-if [[ -d "venv" ]] && [[ -f "venv/bin/python" ]]; then
-    VENV_PYTHON_VERSION=$(venv/bin/python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-    if [[ "$VENV_PYTHON_VERSION" != "$PYTHON_VERSION" ]]; then
-        print_color "$YELLOW" "⚠️  Removing old venv (was Python $VENV_PYTHON_VERSION)"
-        rm -rf venv
-    fi
+# Remove old pip-based venv if it exists
+if [[ -d "venv" ]] && [[ ! -f ".venv/uv.lock" ]]; then
+    print_color "$YELLOW" "⚠️  Removing old pip-based virtual environment..."
+    rm -rf venv .venv
 fi
 
-# Create venv if needed
-if [[ ! -d "venv" ]]; then
-    print_color "$BLUE" "Creating Python virtual environment..."
-    python3 -m venv venv
+# Create virtual environment with uv
+if [[ ! -d ".venv" ]]; then
+    print_color "$BLUE" "Creating virtual environment with uv..."
+    uv venv
 fi
 
-# Activate and upgrade pip
-source venv/bin/activate
-print_color "$BLUE" "Upgrading pip..."
-pip install --quiet --upgrade pip wheel setuptools
+# Install dependencies with uv (MUCH faster than pip)
+print_color "$BLUE" "Installing Python dependencies with uv (this will be fast!)..."
+uv pip install -r requirements.txt
 
-# Install with progress indication
-print_color "$BLUE" "Installing Python dependencies..."
-if [[ "$PYTHON_VERSION" == "3.13" ]] && [[ "$ARCH" == "arm64" ]]; then
-    print_color "$YELLOW" "⏳ This may take 5-10 minutes on Python 3.13 + Apple Silicon..."
-fi
-
-# Try to use only binary packages when possible
-pip install --prefer-binary -r requirements.txt
-
-print_color "$GREEN" "✅ Backend setup complete"
-deactivate
+print_color "$GREEN" "✅ Backend setup complete (with uv)"
 cd ..
 
 # Frontend setup
@@ -134,16 +109,40 @@ EOF
     print_color "$YELLOW" "⚠️  Remember to add your Polygon.io API key to backend/.env"
 fi
 
+# Create pyproject.toml for modern Python project management
+if [[ ! -f "backend/pyproject.toml" ]]; then
+    print_color "$BLUE" "Creating pyproject.toml for modern Python tooling..."
+    cat > backend/pyproject.toml << 'EOF'
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.2.2",
+    "pytest-asyncio>=0.23.7",
+    "black>=24.4.2",
+    "ruff>=0.5.1",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py311", "py312", "py313"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+select = ["E", "F", "B", "Q", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+EOF
+fi
+
 print_color "$GREEN" "✅ Setup complete!"
+echo ""
+echo "Benefits of using uv:"
+echo "  • 8-10x faster package installation"
+echo "  • Better handling of Apple Silicon wheels"
+echo "  • No more Python version conflicts"
+echo "  • Modern, Rust-based tooling"
 echo ""
 echo "To start the servers, run: ./start.sh"
 echo ""
-
-# Offer to install recommended Python version if using 3.13
-if [[ "$PYTHON_VERSION" == "3.13" ]]; then
-    echo "For better compatibility, you can install Python 3.12:"
-    echo "  brew install python@3.12"
-    echo "  rm -rf backend/venv"
-    echo "  python3.12 -m venv backend/venv"
-    echo "  ./setup-macos.sh"
-fi
