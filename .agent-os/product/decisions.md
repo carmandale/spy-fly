@@ -128,3 +128,94 @@ Fixed percentage risk (5%) is a widely accepted practice that prevents position 
 - Less flexibility for experienced traders
 - May filter out some profitable opportunities
 - Requires users to act on alerts manually
+
+## 2025-07-27: Migration to uv Package Manager
+
+**ID:** DEC-004
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Tech Lead, Development Team
+
+### Decision
+
+Migrate from pip to uv for Python package management across the entire project. uv is a modern, Rust-based package manager that's 8-10x faster than pip and handles Apple Silicon builds perfectly.
+
+### Context
+
+During development on macOS with Python 3.13, pip was taking 10-15 minutes to build pandas from source due to Apple Silicon compatibility issues. This significantly impacted developer productivity and violated modern macOS development best practices.
+
+### Alternatives Considered
+
+1. **Continue with pip + workarounds**
+   - Pros: No migration needed, familiar tool
+   - Cons: Slow builds, Apple Silicon issues, outdated approach
+
+2. **Poetry**
+   - Pros: Better than pip, dependency resolution
+   - Cons: Still slower than uv, more complex configuration
+
+3. **Conda/Mamba**
+   - Pros: Good for data science packages
+   - Cons: Heavy, different ecosystem, overkill for web app
+
+### Rationale
+
+uv represents the future of Python package management:
+- 8-10x faster installation than pip
+- Native Apple Silicon support without building from source
+- Better dependency resolution and locking
+- Modern Rust-based implementation
+- Direct drop-in replacement for pip commands
+- Created by Astral (makers of Ruff)
+
+### Consequences
+
+**Positive:**
+- Dramatically faster dependency installation
+- No more Apple Silicon build issues
+- Better developer experience
+- Following 2025 Python best practices
+- Improved CI/CD performance when implemented
+
+**Negative:**
+- Requires developers to install uv (via Homebrew)
+- Less widespread adoption than pip (but growing rapidly)
+- Team needs to learn new tool (though commands are similar)
+
+## 2025-07-27: Unique Port Assignment
+
+**ID:** DEC-005
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Tech Lead, Development Team
+
+### Decision
+
+Assign unique ports to SPY-FLY to avoid conflicts with other development projects:
+- Backend API: Port 8001 (instead of 8000)
+- Frontend Dev Server: Port 5174 (instead of 5173)
+
+### Context
+
+During testing, discovered that port 5173 was being used by another project (AIMS investment dashboard), causing the Playwright tests to fail. This highlighted the need for unique port assignments when multiple projects are in active development.
+
+### Rationale
+
+Using unique ports prevents conflicts and confusion when:
+- Running multiple projects simultaneously
+- Switching between projects during development
+- Running automated tests
+- Debugging cross-project issues
+
+### Consequences
+
+**Positive:**
+- No port conflicts with other projects
+- Can run multiple projects simultaneously
+- Clear project identification by port
+- Smoother development workflow
+
+**Negative:**
+- Need to remember non-standard ports
+- Documentation must be updated
+- Developers need to be informed of the change

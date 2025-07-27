@@ -42,14 +42,18 @@
 - **Economic Calendar:** Investing.com scraper
 
 ### Development Tools
+- **Python Package Manager:** uv (modern Rust-based, 8-10x faster than pip)
 - **API Documentation:** FastAPI automatic OpenAPI/Swagger
 - **Type Validation:** Pydantic 2.0+
 - **Testing (Python):** pytest
 - **Testing (React):** Vitest + React Testing Library
+- **Testing (E2E):** Playwright
 - **Code Formatting:** Black (Python), Prettier (JS/TS)
 
 ### Infrastructure
 - **Application Hosting:** Local Mac (development)
+- **Backend Port:** 8001 (unique to avoid conflicts)
+- **Frontend Port:** 5174 (unique to avoid conflicts)
 - **Database Hosting:** Local SQLite file
 - **Asset Hosting:** Vite dev server (local)
 - **Production Build:** Static files served by FastAPI
