@@ -19,7 +19,12 @@
       "Bash(cp:*)",
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(timeout:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)"
     ],
     "deny": []
   }

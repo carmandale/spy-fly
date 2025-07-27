@@ -59,12 +59,22 @@ mkdir -p logs
 # Start backend server
 echo -e "${BLUE}Starting Backend Server...${NC}"
 cd backend
-source venv/bin/activate 2>/dev/null || {
+
+# Check if venv exists
+if [ -d "venv" ]; then
+    source venv/bin/activate
+    # Check if uvicorn is installed
+    if ! python -m pip show uvicorn &> /dev/null; then
+        echo "Installing backend dependencies..."
+        pip install -r requirements.txt
+    fi
+else
     echo "Creating Python virtual environment..."
     python3 -m venv venv
     source venv/bin/activate
+    echo "Installing backend dependencies..."
     pip install -r requirements.txt
-}
+fi
 
 # Start backend in background and save PID
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 > ../logs/backend.log 2>&1 &
