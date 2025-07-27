@@ -1,7 +1,6 @@
 """In-memory cache for market data."""
 import time
 from typing import Any, Optional, Dict
-from cachetools import TTLCache
 import hashlib
 import json
 import threading
@@ -11,7 +10,9 @@ class MarketDataCache:
     """Thread-safe in-memory cache for market data."""
     
     def __init__(self, max_size: int = 1000):
-        self._cache = TTLCache(maxsize=max_size, ttl=3600)  # Default 1 hour TTL
+        # Store items with their expiration times
+        self._cache: Dict[str, tuple[Any, float]] = {}
+        self._max_size = max_size
         self._lock = threading.RLock()
         self._hits = 0
         self._misses = 0
@@ -19,21 +20,44 @@ class MarketDataCache:
     def get(self, key: str) -> Optional[Any]:
         """Get value from cache."""
         with self._lock:
-            value = self._cache.get(key)
-            if value is not None:
-                self._hits += 1
-            else:
-                self._misses += 1
-            return value
+            if key in self._cache:
+                value, expire_time = self._cache[key]
+                # Check if expired
+                if time.time() < expire_time:
+                    self._hits += 1
+                    return value
+                else:
+                    # Remove expired item
+                    del self._cache[key]
+            
+            self._misses += 1
+            return None
     
     def set(self, key: str, value: Any, ttl: int) -> None:
         """Set value in cache with specific TTL."""
         with self._lock:
-            # Create a new cache item with specific TTL
-            self._cache[key] = value
-            # Store expiration time
+            # Clean up if we're at max size
+            if len(self._cache) >= self._max_size:
+                self._cleanup_expired()
+                # If still at max, remove oldest
+                if len(self._cache) >= self._max_size:
+                    oldest_key = min(self._cache.keys(), 
+                                   key=lambda k: self._cache[k][1])
+                    del self._cache[oldest_key]
+            
+            # Store value with expiration time
             expire_time = time.time() + ttl
-            self._cache.expire(key, expire_time)
+            self._cache[key] = (value, expire_time)
+    
+    def _cleanup_expired(self) -> None:
+        """Remove expired entries."""
+        current_time = time.time()
+        expired_keys = [
+            k for k, (_, expire_time) in self._cache.items()
+            if expire_time <= current_time
+        ]
+        for key in expired_keys:
+            del self._cache[key]
     
     def clear(self) -> None:
         """Clear all cache entries."""
@@ -45,9 +69,10 @@ class MarketDataCache:
     def size(self) -> int:
         """Get current cache size."""
         with self._lock:
+            self._cleanup_expired()
             return len(self._cache)
     
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         with self._lock:
             total_requests = self._hits + self._misses
@@ -57,7 +82,7 @@ class MarketDataCache:
                 "hits": self._hits,
                 "misses": self._misses,
                 "size": len(self._cache),
-                "max_size": self._cache.maxsize,
+                "max_size": self._max_size,
                 "hit_rate": round(hit_rate, 3)
             }
     

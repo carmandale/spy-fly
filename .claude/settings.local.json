@@ -43,7 +43,11 @@
       "Bash(python -m pytest tests/unit/test_config.py -v)",
       "Bash(python -m pytest tests/unit/test_config.py::test_polygon_api_key_validation -v)",
       "Bash(python -m pytest tests/unit/ -v)",
-      "Bash(pytest:*)"
+      "Bash(pytest:*)",
+      "Bash(python -m pytest tests/unit/test_polygon_client.py::TestPolygonDataService -xvs)",
+      "Bash(python -m pytest tests/unit/test_polygon_client.py::TestPolygonClient -xvs)",
+      "Bash(python -m pytest tests/unit/test_polygon_client.py::TestPolygonClient::test_retry_on_transient_error -xvs)",
+      "Bash(python -m pytest tests/unit/test_polygon_client.py -xvs)"
     ],
     "deny": []
   }

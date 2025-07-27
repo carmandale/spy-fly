@@ -1,13 +1,18 @@
 """Polygon.io API client."""
 import httpx
-from datetime import date, datetime
-from typing import Optional, Dict, Any
+from datetime import date, datetime, timedelta
+from typing import Optional, Dict, Any, List
 import asyncio
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import logging
 
 from app.config import settings
 from app.models.market import Quote, OptionChain, OptionContract, Bar
 from app.core.exceptions import PolygonAPIError, RateLimitError
+from app.services.cache import MarketDataCache
+from app.services.rate_limiter import RateLimiter
+
+logger = logging.getLogger(__name__)
 
 
 class PolygonClient:
@@ -199,3 +204,247 @@ class PolygonClient:
     async def close(self):
         """Close the HTTP client."""
         await self._client.aclose()
+
+
+class PolygonDataService:
+    """
+    Enhanced Polygon.io service with caching and rate limiting.
+    
+    This service wraps the PolygonClient to add:
+    - Intelligent caching with TTL support
+    - Rate limiting compliance
+    - Graceful error handling with fallback to cache
+    - Structured logging for monitoring
+    """
+    
+    def __init__(
+        self,
+        api_key: str,
+        cache_manager: Optional[MarketDataCache] = None,
+        rate_limiter: Optional[RateLimiter] = None
+    ):
+        """
+        Initialize the data service with dependencies.
+        
+        Args:
+            api_key: Polygon.io API key
+            cache_manager: Cache manager instance (creates new if None)
+            rate_limiter: Rate limiter instance (creates new if None)
+        """
+        self.client = PolygonClient(api_key=api_key)
+        self.cache_manager = cache_manager or MarketDataCache(max_size=1000)
+        self.rate_limiter = rate_limiter or RateLimiter(
+            requests_per_minute=settings.polygon_rate_limit
+        )
+        self.api_key = api_key
+    
+    async def get_spy_quote(self) -> Quote:
+        """
+        Get current SPY quote with caching and rate limiting.
+        
+        Returns:
+            Quote object with current SPY price and metadata
+            
+        Raises:
+            PolygonAPIError: If API fails and no cached data available
+        """
+        cache_key = self.cache_manager.generate_key("quote", "SPY")
+        
+        # Check cache first
+        cached_quote = self.cache_manager.get(cache_key)
+        if cached_quote:
+            logger.debug(f"Returning cached SPY quote, price: {cached_quote.price}")
+            return cached_quote
+        
+        # Check rate limit
+        wait_time = self.rate_limiter.get_wait_time()
+        if wait_time > 0:
+            logger.warning(f"Rate limit hit, waiting {wait_time:.2f} seconds")
+            await asyncio.sleep(wait_time)
+        
+        try:
+            # Consume rate limit token
+            if not self.rate_limiter.consume():
+                raise RateLimitError("Rate limit exceeded", retry_after=60)
+            
+            # Fetch from API
+            quote = await self.client.get_quote("SPY")
+            
+            # Cache the result
+            self.cache_manager.set(
+                cache_key, 
+                quote, 
+                ttl=settings.polygon_cache_ttl_quote
+            )
+            
+            logger.info(f"Fetched fresh SPY quote: ${quote.price}")
+            return quote
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch SPY quote: {e}")
+            
+            # Try to return stale cached data
+            stale_quote = self.cache_manager.get(cache_key)
+            if stale_quote:
+                logger.warning("Returning stale cached quote due to API error")
+                return stale_quote
+            
+            # Re-raise if no fallback available
+            raise PolygonAPIError(f"Failed to fetch SPY quote: {str(e)}")
+    
+    async def get_option_chain(
+        self,
+        expiration_date: Optional[date] = None
+    ) -> List[OptionContract]:
+        """
+        Get 0-DTE option chain for SPY with caching.
+        
+        Args:
+            expiration_date: Specific expiration date (defaults to today)
+            
+        Returns:
+            List of option contracts for the specified date
+            
+        Raises:
+            PolygonAPIError: If no options found or API error
+        """
+        # Default to today for 0-DTE
+        if expiration_date is None:
+            expiration_date = date.today()
+        
+        cache_key = self.cache_manager.generate_key(
+            "options", "SPY", expiration_date.isoformat()
+        )
+        
+        # Check cache
+        cached_chain = self.cache_manager.get(cache_key)
+        if cached_chain:
+            logger.debug(f"Returning cached option chain for {expiration_date}")
+            return cached_chain
+        
+        # Check rate limit
+        wait_time = self.rate_limiter.get_wait_time()
+        if wait_time > 0:
+            logger.warning(f"Rate limit hit, waiting {wait_time:.2f} seconds")
+            await asyncio.sleep(wait_time)
+        
+        try:
+            # Consume rate limit token
+            if not self.rate_limiter.consume():
+                raise RateLimitError("Rate limit exceeded", retry_after=60)
+            
+            # Fetch from API
+            option_chain = await self.client.get_option_chain("SPY", expiration_date)
+            
+            # Filter for minimum volume if needed
+            filtered_options = [
+                opt for opt in option_chain.options
+                if opt.volume >= 10  # Minimum volume threshold
+            ]
+            
+            # Cache the result
+            self.cache_manager.set(
+                cache_key,
+                filtered_options,
+                ttl=settings.polygon_cache_ttl_options
+            )
+            
+            logger.info(f"Fetched {len(filtered_options)} SPY options for {expiration_date}")
+            return filtered_options
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch option chain: {e}")
+            
+            # Try stale cache
+            stale_chain = self.cache_manager.get(cache_key)
+            if stale_chain:
+                logger.warning("Returning stale cached option chain due to API error")
+                return stale_chain
+            
+            raise PolygonAPIError(f"Failed to fetch option chain: {str(e)}")
+    
+    async def get_historical_data(self, days: int = 30) -> List[Bar]:
+        """
+        Get historical price data for SPY with caching.
+        
+        Args:
+            days: Number of days to look back (default 30, max 90)
+            
+        Returns:
+            List of price bars for the specified period
+            
+        Raises:
+            ValueError: If days > 90
+            PolygonAPIError: If API fails
+        """
+        if days > 90:
+            raise ValueError("Maximum historical lookback is 90 days")
+        
+        to_date = date.today()
+        from_date = to_date - timedelta(days=days)
+        
+        cache_key = self.cache_manager.generate_key(
+            "historical", "SPY", f"{days}d"
+        )
+        
+        # Check cache
+        cached_bars = self.cache_manager.get(cache_key)
+        if cached_bars:
+            logger.debug(f"Returning cached historical data for {days} days")
+            return cached_bars
+        
+        # Check rate limit
+        wait_time = self.rate_limiter.get_wait_time()
+        if wait_time > 0:
+            logger.warning(f"Rate limit hit, waiting {wait_time:.2f} seconds")
+            await asyncio.sleep(wait_time)
+        
+        try:
+            # Consume rate limit token
+            if not self.rate_limiter.consume():
+                raise RateLimitError("Rate limit exceeded", retry_after=60)
+            
+            # Fetch from API
+            bars = await self.client.get_historical_bars(
+                "SPY", from_date, to_date, "day"
+            )
+            
+            # Cache the result
+            self.cache_manager.set(
+                cache_key,
+                bars,
+                ttl=settings.polygon_cache_ttl_historical
+            )
+            
+            logger.info(f"Fetched {len(bars)} days of historical data")
+            return bars
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch historical data: {e}")
+            
+            # Try stale cache
+            stale_bars = self.cache_manager.get(cache_key)
+            if stale_bars:
+                logger.warning("Returning stale cached historical data due to API error")
+                return stale_bars
+            
+            raise PolygonAPIError(f"Failed to fetch historical data: {str(e)}")
+    
+    async def health_check(self) -> bool:
+        """
+        Check if Polygon.io API is accessible.
+        
+        Returns:
+            True if API is healthy, False otherwise
+        """
+        try:
+            # Use a lightweight endpoint for health check
+            await self.client._make_request("/v1/marketstatus/now")
+            return True
+        except Exception as e:
+            logger.error(f"Health check failed: {e}")
+            return False
+    
+    async def close(self):
+        """Clean up resources."""
+        await self.client.close()

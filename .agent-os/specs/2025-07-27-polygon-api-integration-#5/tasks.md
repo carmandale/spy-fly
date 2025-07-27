@@ -21,13 +21,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 2.4 Add database connection and session management
   - [x] 2.5 Verify all tests pass for database operations
 
-- [ ] 3. Core Polygon.io API Client
-  - [ ] 3.1 Write tests for PolygonDataService authentication and basic operations
-  - [ ] 3.2 Implement PolygonDataService with authentication and connection management
-  - [ ] 3.3 Add SPY quote retrieval with error handling and retries
-  - [ ] 3.4 Implement option chain fetching with 0-DTE filtering
-  - [ ] 3.5 Add historical data retrieval with date range support
-  - [ ] 3.6 Verify all tests pass for API client functionality
+- [x] 3. Core Polygon.io API Client
+  - [x] 3.1 Write tests for PolygonDataService authentication and basic operations
+  - [x] 3.2 Implement PolygonDataService with authentication and connection management
+  - [x] 3.3 Add SPY quote retrieval with error handling and retries
+  - [x] 3.4 Implement option chain fetching with 0-DTE filtering
+  - [x] 3.5 Add historical data retrieval with date range support
+  - [x] 3.6 Verify all tests pass for API client functionality
 
 - [ ] 4. Caching Layer Implementation
   - [ ] 4.1 Write tests for CacheManager with TTL expiration and cleanup
