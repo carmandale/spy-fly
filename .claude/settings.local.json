@@ -49,7 +49,9 @@
       "Bash(python -m pytest tests/unit/test_polygon_client.py::TestPolygonClient::test_retry_on_transient_error -xvs)",
       "Bash(python -m pytest tests/unit/test_polygon_client.py -xvs)",
       "Bash(python -m pytest tests/unit/test_polygon_client.py -v)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(python:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }
