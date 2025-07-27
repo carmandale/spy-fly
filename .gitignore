@@ -71,6 +71,10 @@ build/
 logs/
 *.log
 
+# Process PIDs
+.backend.pid
+.frontend.pid
+
 # Temporary files
 *.tmp
 *.temp
