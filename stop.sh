@@ -2,50 +2,113 @@
 
 # SPY-FLY Server Shutdown Script
 
+set -euo pipefail  # Exit on error, undefined variables, pipe failures
+
 echo "🛑 Stopping SPY-FLY servers..."
 
 # Colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+readonly GREEN='\033[0;32m'
+readonly RED='\033[0;31m'
+readonly YELLOW='\033[0;33m'
+readonly NC='\033[0m' # No Color
+
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+
+# Function to print colored output
+print_color() {
+    local color=$1
+    local message=$2
+    printf "%b%s%b\n" "$color" "$message" "$NC"
+}
+
+# Function to stop process by PID file
+stop_by_pid_file() {
+    local pid_file=$1
+    local service_name=$2
+    
+    if [[ -f "$pid_file" ]]; then
+        local pid
+        pid=$(<"$pid_file")
+        
+        # Check if process is actually running
+        if kill -0 "$pid" 2>/dev/null; then
+            # Try graceful shutdown first
+            if kill -TERM "$pid" 2>/dev/null; then
+                # Wait up to 5 seconds for graceful shutdown
+                local count=0
+                while kill -0 "$pid" 2>/dev/null && [[ $count -lt 5 ]]; do
+                    sleep 1
+                    ((count++))
+                done
+                
+                # Force kill if still running
+                if kill -0 "$pid" 2>/dev/null; then
+                    kill -9 "$pid" 2>/dev/null
+                    print_color "$YELLOW" "⚠️  $service_name server required force stop"
+                else
+                    print_color "$GREEN" "✓ $service_name server stopped gracefully"
+                fi
+            fi
+        else
+            print_color "$YELLOW" "⚠️  $service_name server was not running (stale PID)"
+        fi
+        rm -f "$pid_file"
+    else
+        # No PID file, try to find by port
+        return 1
+    fi
+    return 0
+}
+
+# Function to stop process by port
+stop_by_port() {
+    local port=$1
+    local service_name=$2
+    
+    # Get PIDs listening on the port
+    local pids
+    pids=$(lsof -ti:$port 2>/dev/null || true)
+    
+    if [[ -n "$pids" ]]; then
+        # Try graceful shutdown first
+        echo "$pids" | xargs kill -TERM 2>/dev/null || true
+        
+        # Wait a moment
+        sleep 2
+        
+        # Force kill any remaining
+        local remaining
+        remaining=$(lsof -ti:$port 2>/dev/null || true)
+        if [[ -n "$remaining" ]]; then
+            echo "$remaining" | xargs kill -9 2>/dev/null || true
+            print_color "$YELLOW" "⚠️  $service_name server required force stop"
+        else
+            print_color "$GREEN" "✓ $service_name server stopped"
+        fi
+        return 0
+    else
+        print_color "$YELLOW" "$service_name server was not running"
+        return 1
+    fi
+}
 
 # Stop backend server
-if [ -f .backend.pid ]; then
-    BACKEND_PID=$(cat .backend.pid)
-    if kill $BACKEND_PID 2>/dev/null; then
-        echo -e "${GREEN}✓ Backend server stopped${NC}"
-    else
-        echo -e "${RED}⚠️  Backend server was not running${NC}"
-    fi
-    rm -f .backend.pid
-else
-    # Try to find and kill by port
-    if lsof -ti:8000 >/dev/null 2>&1; then
-        lsof -ti:8000 | xargs kill -9
-        echo -e "${GREEN}✓ Backend server stopped (by port)${NC}"
-    else
-        echo "Backend server was not running"
-    fi
+if ! stop_by_pid_file ".backend.pid" "Backend"; then
+    stop_by_port 8000 "Backend"
 fi
 
 # Stop frontend server
-if [ -f .frontend.pid ]; then
-    FRONTEND_PID=$(cat .frontend.pid)
-    if kill $FRONTEND_PID 2>/dev/null; then
-        echo -e "${GREEN}✓ Frontend server stopped${NC}"
-    else
-        echo -e "${RED}⚠️  Frontend server was not running${NC}"
-    fi
-    rm -f .frontend.pid
-else
-    # Try to find and kill by port
-    if lsof -ti:5173 >/dev/null 2>&1; then
-        lsof -ti:5173 | xargs kill -9
-        echo -e "${GREEN}✓ Frontend server stopped (by port)${NC}"
-    else
-        echo "Frontend server was not running"
-    fi
+if ! stop_by_pid_file ".frontend.pid" "Frontend"; then
+    stop_by_port 5173 "Frontend"
+fi
+
+# Clean up any orphaned log files
+if [[ -d "logs" ]]; then
+    # Keep logs but truncate if they're too large (>10MB)
+    find logs -name "*.log" -size +10M -exec truncate -s 0 {} \;
 fi
 
 echo ""
-echo "All servers stopped."
+print_color "$GREEN" "All servers stopped."

@@ -24,7 +24,8 @@
       "Bash(cd:*)",
       "Bash(timeout:*)",
       "Bash(source:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }
