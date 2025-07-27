@@ -71,7 +71,7 @@ class PolygonClient:
                 raise PolygonAPIError(f"API error: {e.response.status_code}")
     
     async def get_quote(self, ticker: str) -> Quote:
-        """Get real-time quote for a ticker."""
+        """Get real-time quote for a ticker using free tier endpoints."""
         endpoint = f"/v2/aggs/ticker/{ticker}/prev"
         
         data = await self._make_request(endpoint)
@@ -81,19 +81,14 @@ class PolygonClient:
         
         result = data["results"][0]
         
-        # Get additional quote details
-        quote_endpoint = f"/v3/quotes/{ticker}"
-        quote_data = await self._make_request(quote_endpoint)
-        
-        quote_result = quote_data.get("results", {})
-        
+        # Free tier doesn't include v3/quotes, so use what we have from v2/aggs
         return Quote(
             ticker=ticker,
-            price=result.get("c", 0),
-            bid=quote_result.get("bid_price"),
-            ask=quote_result.get("ask_price"),
-            bid_size=quote_result.get("bid_size"),
-            ask_size=quote_result.get("ask_size"),
+            price=result.get("c", 0),  # Close price as current price
+            bid=None,  # Not available in free tier
+            ask=None,  # Not available in free tier
+            bid_size=None,  # Not available in free tier
+            ask_size=None,  # Not available in free tier
             volume=result.get("v", 0),
             high=result.get("h"),
             low=result.get("l"),
