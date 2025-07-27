@@ -38,8 +38,8 @@ This project uses **uv**, the modern Python package manager that's 8-10x faster 
 ```
 
 Access the application:
-- Dashboard: http://localhost:5174
-- API Documentation: http://localhost:8001/docs
+- Dashboard: http://localhost:3003
+- API Documentation: http://localhost:8003/docs
 
 **Why uv?**
 - ⚡ 8-10x faster package installation than pip
@@ -75,9 +75,28 @@ Setup:
    ```
 
 5. Access the application:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
+   - Frontend: http://localhost:3003
+   - Backend API: http://localhost:8003
+   - API Documentation: http://localhost:8003/docs
+
+### Local Ports
+
+| Service | Port |
+|---------|------|
+| Front-end dev server | **3003** |
+| Back-end API (Uvicorn / FastAPI) | **8003** |
+
+> **How it works**  
+> Each folder has a private env file:
+>
+> * `frontend/.env.local`   → `PORT=3003`, `VITE_API_BASE_URL=http://localhost:8003`  
+> * `backend/.env`          → `API_PORT=8003`
+>
+> Dev frameworks auto-load these files, so you never export variables manually.
+>
+> Need to change a port? Edit the two env files and restart the dev servers.
+>
+> **Do not commit real `.env` files** – use `.env.example` for templates.
 
 ## Development
 

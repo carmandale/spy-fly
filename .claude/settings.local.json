@@ -26,7 +26,19 @@
       "Bash(source:*)",
       "Bash(pip install:*)",
       "Bash(chmod:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(git reset:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cat:*)",
+      "Bash(python3:*)",
+      "Bash(uv run:*)",
+      "Bash(pkill:*)",
+      "Bash(true)"
     ],
     "deny": []
   }
