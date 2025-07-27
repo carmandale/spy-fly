@@ -91,10 +91,10 @@ async def get_quote(ticker: str, response: Response):
 @router.get("/options/{ticker}", response_model=OptionChainResponse)
 async def get_options(
     ticker: str,
+    response: Response,
     expiration: str = Query(..., description="Option expiration date in YYYY-MM-DD format"),
     option_type: Optional[str] = Query(None, description="Filter by 'call' or 'put'"),
-    strike_range: Optional[int] = Query(10, description="Number of strikes above/below current price"),
-    response: Response
+    strike_range: Optional[int] = Query(10, description="Number of strikes above/below current price")
 ):
     """Get option chain for a specific expiration."""
     # Validate ticker
@@ -186,10 +186,10 @@ async def get_options(
 @router.get("/historical/{ticker}", response_model=HistoricalDataResponse)
 async def get_historical(
     ticker: str,
+    response: Response,
     from_date: str = Query(..., description="Start date in YYYY-MM-DD format"),
     to_date: str = Query(..., description="End date in YYYY-MM-DD format"),
-    timeframe: str = Query("day", description="Timeframe: minute, hour, day"),
-    response: Response
+    timeframe: str = Query("day", description="Timeframe: minute, hour, day")
 ):
     """Get historical price data."""
     # Validate ticker
