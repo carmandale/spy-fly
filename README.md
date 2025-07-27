@@ -12,22 +12,48 @@ An automated trading system for SPY 0-DTE bull-call-spread strategies, focusing 
 
 ## Tech Stack
 
-- **Backend**: FastAPI (Python 3.12+)
+- **Backend**: FastAPI (Python 3.11 or 3.12 recommended)
 - **Frontend**: React 18 with TypeScript and Vite
 - **Database**: SQLite with SQLAlchemy
 - **Styling**: Tailwind CSS v4
+- **Market Data**: Polygon.io API
 - **Containerization**: Docker & Docker Compose
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Local Development (Recommended for macOS)
 
+For the fastest setup on macOS:
+
+```bash
+# First-time setup
+./setup-macos.sh
+
+# Start servers
+./start.sh
+
+# Stop servers
+./stop.sh
+```
+
+Access the application:
+- Dashboard: http://localhost:5173
+- API Documentation: http://localhost:8000/docs
+
+**Note for macOS Users**: If using Python 3.13, initial setup may take 5-10 minutes as some packages build from source. For faster installation, use Python 3.12:
+```bash
+brew install python@3.12
+python3.12 -m venv backend/venv
+```
+
+### Option 2: Docker (Platform Independent)
+
+Prerequisites:
 - Docker and Docker Compose installed
 - Git
 - API keys for market data providers (see `.env.example`)
 
-### Setup
-
+Setup:
 1. Clone the repository:
    ```bash
    git clone <repository-url>

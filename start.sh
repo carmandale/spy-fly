@@ -83,7 +83,7 @@ print_color "$BLUE" "Starting Backend Server..."
         # Check if uvicorn is installed
         if ! python -m pip show uvicorn &> /dev/null; then
             echo "Installing backend dependencies..."
-            pip install --quiet -r requirements.txt
+            pip install --quiet --prefer-binary -r requirements.txt
         fi
     else
         echo "Creating Python virtual environment..."
