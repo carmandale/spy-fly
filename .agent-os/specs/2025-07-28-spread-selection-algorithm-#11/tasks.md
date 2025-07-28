@@ -16,15 +16,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 	- [x] 1.6 Add mathematical precision validation against reference Black-Scholes implementations
 	- [x] 1.7 Verify all tests pass and mathematical accuracy meets 0.01% tolerance requirement
 
-- [ ] 2. Options Chain Processing and Spread Generation
-	- [ ] 2.1 Write tests for options chain data parsing and validation from Polygon.io format
-	- [ ] 2.2 Implement OptionsChainProcessor to filter 0-DTE SPY options and structure data
-	- [ ] 2.3 Write tests for SpreadGenerator bull-call-spread combination logic
-	- [ ] 2.4 Implement SpreadGenerator with vectorized operations for performance
-	- [ ] 2.5 Add comprehensive tests for invalid combination filtering (long_strike >= short_strike)
-	- [ ] 2.6 Implement liquidity filtering based on bid/ask spreads and volume requirements
-	- [ ] 2.7 Add performance tests ensuring < 10 second processing of 500+ option chains
-	- [ ] 2.8 Verify all tests pass with realistic options data scenarios
+- [x] 2. Options Chain Processing and Spread Generation
+	- [x] 2.1 Write tests for options chain data parsing and validation from Polygon.io format
+	- [x] 2.2 Implement OptionsChainProcessor to filter 0-DTE SPY options and structure data
+	- [x] 2.3 Write tests for SpreadGenerator bull-call-spread combination logic
+	- [x] 2.4 Implement SpreadGenerator with vectorized operations for performance
+	- [x] 2.5 Add comprehensive tests for invalid combination filtering (long_strike >= short_strike)
+	- [x] 2.6 Implement liquidity filtering based on bid/ask spreads and volume requirements
+	- [x] 2.7 Add performance tests ensuring < 10 second processing of 500+ option chains
+	- [x] 2.8 Verify all tests pass with realistic options data scenarios
 
 - [ ] 3. Risk Management and Position Sizing
 	- [ ] 3.1 Write tests for RiskValidator 5% buying power enforcement with edge cases

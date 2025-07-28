@@ -243,8 +243,9 @@ class TestSpreadSelectionService:
 		
 		option_chain = await self.spread_service._get_current_option_chain()
 		
-		# Should return empty calls list
-		assert option_chain == {"calls": []}
+		# Should return the OptionChainResponse object
+		assert option_chain == empty_chain
+		assert option_chain.options == []
 
 	def test_mathematical_precision_validation(self):
 		"""Test mathematical precision requirements are met."""
