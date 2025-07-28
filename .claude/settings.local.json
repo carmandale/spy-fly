@@ -62,7 +62,9 @@
       "Bash(npm test)",
       "Bash(uv pip install:*)",
       "Bash(./start.sh:*)",
-      "Bash(uv add:*)"
+      "Bash(uv add:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(git rebase:*)"
     ],
     "deny": []
   }
