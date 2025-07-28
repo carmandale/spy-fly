@@ -7,12 +7,14 @@ calculations, risk management, and market data to generate trade recommendations
 
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Optional
+from typing import Any
 
+from app.models.spread import SpreadRecommendation
 from app.services.black_scholes_calculator import BlackScholesCalculator
 from app.services.market_service import MarketDataService
-from app.services.sentiment_calculator import SentimentCalculator
 from app.services.options_chain_processor import OptionsChainProcessor
+from app.services.risk_validator import RiskValidator
+from app.services.sentiment_calculator import SentimentCalculator
 from app.services.spread_generator import SpreadGenerator
 
 
@@ -39,44 +41,6 @@ class SpreadConfiguration:
     sentiment_weight: float = 0.3  # Weight for sentiment in ranking
 
 
-@dataclass
-class SpreadRecommendation:
-    """Data structure for a spread recommendation."""
-
-    # Spread details
-    long_strike: float
-    short_strike: float
-    long_premium: float
-    short_premium: float
-    net_debit: float
-
-    # Risk metrics
-    max_risk: float
-    max_profit: float
-    risk_reward_ratio: float
-    probability_of_profit: float
-    breakeven_price: float
-
-    # Market data
-    long_bid: float
-    long_ask: float
-    short_bid: float
-    short_ask: float
-    long_volume: int
-    short_volume: int
-
-    # Analysis metadata
-    expected_value: float
-    sentiment_score: float
-    ranking_score: float
-    timestamp: datetime
-
-    # Order execution details
-    contracts_to_trade: int
-    total_cost: float
-    buying_power_used_pct: float
-
-
 class SpreadSelectionService:
     """
     Core service for SPY 0-DTE bull-call-spread selection and analysis.
@@ -91,8 +55,9 @@ class SpreadSelectionService:
         market_service: MarketDataService,
         sentiment_calculator: SentimentCalculator,
         config: SpreadConfiguration | None = None,
-        options_processor: Optional[OptionsChainProcessor] = None,
-        spread_generator: Optional[SpreadGenerator] = None,
+        options_processor: OptionsChainProcessor | None = None,
+        spread_generator: SpreadGenerator | None = None,
+        risk_validator: RiskValidator | None = None,
     ):
         """
         Initialize the spread selection service with dependencies.
@@ -104,15 +69,20 @@ class SpreadSelectionService:
                 config: Configuration parameters (uses defaults if None)
                 options_processor: Options chain processor (creates default if None)
                 spread_generator: Spread generator (creates default if None)
+                risk_validator: Risk validator (creates default if None)
         """
         self.black_scholes = black_scholes_calculator
         self.market_service = market_service
         self.sentiment_calculator = sentiment_calculator
         self.config = config or SpreadConfiguration()
-        
+
         # Initialize enhanced processors
         self.options_processor = options_processor or OptionsChainProcessor()
         self.spread_generator = spread_generator or SpreadGenerator()
+        self.risk_validator = risk_validator or RiskValidator(
+            max_buying_power_pct=self.config.max_buying_power_pct,
+            min_risk_reward_ratio=self.config.min_risk_reward_ratio,
+        )
 
         # Internal state
         self._current_sentiment_score: float | None = None
@@ -153,15 +123,15 @@ class SpreadSelectionService:
             option_chain_response,
             spot_price=self._current_spy_price,
             config={
-                'filter_zero_dte': True,
-                'validate_data': True,
-                'min_volume': self.config.min_volume,
-                'max_bid_ask_spread_pct': self.config.max_bid_ask_spread_pct,
-                'min_otm_points': -5,  # Allow slightly ITM
-                'max_otm_points': 20   # Up to 20 points OTM
-            }
+                "filter_zero_dte": True,
+                "validate_data": True,
+                "min_volume": self.config.min_volume,
+                "max_bid_ask_spread_pct": self.config.max_bid_ask_spread_pct,
+                "min_otm_points": -5,  # Allow slightly ITM
+                "max_otm_points": 20,  # Up to 20 points OTM
+            },
         )
-        
+
         if options_df.empty:
             return []  # No valid options to process
 
@@ -169,14 +139,14 @@ class SpreadSelectionService:
         spread_combinations = self.spread_generator.generate_filtered_spreads(
             options_df,
             config={
-                'min_risk_reward_ratio': self.config.min_risk_reward_ratio,
-                'min_spread_width': 1.0,
-                'max_spread_width': 20.0,
-                'min_liquidity_score': 50.0,
-                'use_vectorized': True  # Use fast vectorized operations
-            }
+                "min_risk_reward_ratio": self.config.min_risk_reward_ratio,
+                "min_spread_width": 1.0,
+                "max_spread_width": 20.0,
+                "min_liquidity_score": 50.0,
+                "use_vectorized": True,  # Use fast vectorized operations
+            },
         )
-        
+
         if not spread_combinations:
             return []  # No valid spreads found
 
@@ -187,7 +157,8 @@ class SpreadSelectionService:
 
         # Step 7: Filter by probability requirements
         valid_recommendations = [
-            rec for rec in recommendations 
+            rec
+            for rec in recommendations
             if rec.probability_of_profit >= self.config.min_probability_of_profit
         ]
 
@@ -503,57 +474,52 @@ class SpreadSelectionService:
                 List sorted by ranking score (highest first)
         """
         return sorted(recommendations, key=lambda x: x.ranking_score, reverse=True)
-    
+
     async def _analyze_spread_combinations(
-        self,
-        spread_combinations: list,
-        options_df: Any,
-        account_size: float
+        self, spread_combinations: list, options_df: Any, account_size: float
     ) -> list[SpreadRecommendation]:
         """
         Analyze spread combinations and create recommendations.
-        
+
         Args:
             spread_combinations: List of SpreadCombination objects
             options_df: Options DataFrame (for additional data if needed)
             account_size: Account size for position sizing
-            
+
         Returns:
             List of SpreadRecommendation objects
         """
         recommendations = []
-        
+
         for spread in spread_combinations:
             # Calculate position sizing
             position_info = self.spread_generator.calculate_position_size(
                 spread,
                 account_size=account_size,
-                max_risk_pct=self.config.max_buying_power_pct
+                max_risk_pct=self.config.max_buying_power_pct,
             )
-            
+
             # Calculate probability of profit using Black-Scholes
             time_to_expiry = 1.0 / 365  # 0-DTE approximation
             volatility = self._current_vix / 100 if self._current_vix else 0.20
-            
+
             probability_of_profit = self.black_scholes.probability_of_profit(
                 spot_price=self._current_spy_price,
                 strike_price=spread.breakeven,
                 time_to_expiry=time_to_expiry,
                 volatility=volatility,
             )
-            
+
             # Calculate expected value
             expected_value = (probability_of_profit * spread.max_profit) - (
                 (1 - probability_of_profit) * spread.max_risk
             )
-            
+
             # Calculate ranking score
             ranking_score = self._calculate_ranking_score(
-                probability_of_profit,
-                spread.risk_reward_ratio,
-                expected_value
+                probability_of_profit, spread.risk_reward_ratio, expected_value
             )
-            
+
             # Create recommendation
             recommendation = SpreadRecommendation(
                 long_strike=spread.long_strike,
@@ -576,24 +542,31 @@ class SpreadSelectionService:
                 sentiment_score=self._current_sentiment_score,
                 ranking_score=ranking_score,
                 timestamp=datetime.now(),
-                contracts_to_trade=position_info['contracts'],
-                total_cost=position_info['total_cost'],
-                buying_power_used_pct=position_info['risk_pct']
+                contracts_to_trade=position_info["contracts"],
+                total_cost=position_info["total_cost"],
+                buying_power_used_pct=position_info["risk_pct"],
             )
-            
-            recommendations.append(recommendation)
-            
+
+            # Validate the recommendation against risk constraints
+            validation_result = self.risk_validator.validate_spread(
+                recommendation, account_size
+            )
+
+            # Only add if it passes all risk checks
+            if validation_result["is_valid"]:
+                recommendations.append(recommendation)
+
         return recommendations
-    
+
     def _rank_recommendations(
         self, recommendations: list[SpreadRecommendation]
     ) -> list[SpreadRecommendation]:
         """
         Rank spread recommendations by their ranking score.
-        
+
         Args:
             recommendations: List of spread recommendations
-            
+
         Returns:
             List sorted by ranking score (highest first)
         """
@@ -606,3 +579,8 @@ class SpreadSelectionService:
     def update_configuration(self, config: SpreadConfiguration) -> None:
         """Update service configuration."""
         self.config = config
+        # Update risk validator with new limits
+        self.risk_validator.update_configuration(
+            max_buying_power_pct=config.max_buying_power_pct,
+            min_risk_reward_ratio=config.min_risk_reward_ratio,
+        )

@@ -192,8 +192,8 @@ uv represents the future of Python package management:
 ### Decision
 
 Assign unique ports to SPY-FLY to avoid conflicts with other development projects:
-- Backend API: Port 8001 (instead of 8000)
-- Frontend Dev Server: Port 5174 (instead of 5173)
+- Backend API: Port 8003 (configured in .env)
+- Frontend Dev Server: Port 3003 (configured in vite.config.ts)
 
 ### Context
 

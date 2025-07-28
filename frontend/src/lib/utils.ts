@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
 /**
@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
 export function ensureLightMode() {
   if (typeof document !== 'undefined') {
     // Always set dark mode to false
-    document.documentElement.classList.toggle('dark', false);
+    document.documentElement.classList.toggle('dark', false)
   }
 }
 
@@ -24,6 +24,6 @@ export function ensureLightMode() {
 export function removeDarkClasses(className: string): string {
   return className
     .split(' ')
-    .filter(cls => !cls.startsWith('dark:'))
-    .join(' ');
+    .filter((cls) => !cls.startsWith('dark:'))
+    .join(' ')
 }

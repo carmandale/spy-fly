@@ -4,7 +4,7 @@ import requests
 from datetime import datetime
 from pprint import pprint
 
-API_BASE_URL = "http://localhost:8001/api/v1"
+API_BASE_URL = "http://localhost:8003/api/v1"
 
 def demo_trade_flow():
     """Demonstrate the trade input and history functionality."""
@@ -99,7 +99,7 @@ def demo_trade_flow():
     
     print("\n=== Demo Complete ===")
     print("\nYou can now:")
-    print("- Visit http://localhost:5174 to see the dashboard")
+    print("- Visit http://localhost:3003 to see the dashboard")
     print("- Click 'Record Trade' to manually input trades")
     print("- View the trade history table at the bottom")
     print("- Filter trades by date and status")
@@ -108,6 +108,6 @@ if __name__ == "__main__":
     try:
         demo_trade_flow()
     except requests.exceptions.ConnectionError:
-        print("Error: Could not connect to API. Make sure the backend is running on port 8001.")
+        print("Error: Could not connect to API. Make sure the backend is running on port 8003.")
     except Exception as e:
         print(f"Error: {e}")

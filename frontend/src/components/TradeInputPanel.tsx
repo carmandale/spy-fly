@@ -2,17 +2,14 @@ import React, { useState } from 'react'
 import { apiClient, Trade, TradeSpread } from '../api/client'
 
 interface TradeInputPanelProps {
-  onTradeCreated?: (trade: Trade) => void
+  onTradeCreated?: () => void
   onClose?: () => void
 }
 
-export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({ 
-  onTradeCreated, 
-  onClose 
-}) => {
+export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({ onTradeCreated, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Trade form state
   const [tradeData, setTradeData] = useState<Partial<Trade>>({
     trade_date: new Date().toISOString().split('T')[0],
@@ -20,7 +17,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
     status: 'recommended',
     entry_signal_reason: '',
     contracts: 1,
-    notes: ''
+    notes: '',
   })
 
   // Spread form state
@@ -36,33 +33,38 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
     max_profit: 0,
     max_loss: 0,
     breakeven: 0,
-    risk_reward_ratio: 1.0
+    risk_reward_ratio: 1.0,
   })
 
-  const handleTradeChange = (field: keyof Trade, value: any) => {
-    setTradeData(prev => ({ ...prev, [field]: value }))
+  const handleTradeChange = (field: keyof Trade, value: string | number) => {
+    setTradeData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSpreadChange = (field: keyof TradeSpread, value: any) => {
-    setSpreadData(prev => ({ ...prev, [field]: value }))
-    
+  const handleSpreadChange = (field: keyof TradeSpread, value: string | number) => {
+    setSpreadData((prev) => ({ ...prev, [field]: value }))
+
     // Auto-calculate spread metrics when key values change
     if (['long_strike', 'short_strike', 'long_premium', 'short_premium'].includes(field)) {
       const updated = { ...spreadData, [field]: value }
-      if (updated.long_strike && updated.short_strike && updated.long_premium && updated.short_premium) {
+      if (
+        updated.long_strike &&
+        updated.short_strike &&
+        updated.long_premium &&
+        updated.short_premium
+      ) {
         const netDebit = updated.long_premium - updated.short_premium
-        const maxProfit = (updated.short_strike - updated.long_strike) - netDebit
+        const maxProfit = updated.short_strike - updated.long_strike - netDebit
         const maxLoss = netDebit
         const breakeven = updated.long_strike + netDebit
         const riskRewardRatio = maxProfit / maxLoss
 
-        setSpreadData(prev => ({
+        setSpreadData((prev) => ({
           ...prev,
           net_debit: netDebit,
           max_profit: maxProfit,
           max_loss: maxLoss,
           breakeven: breakeven,
-          risk_reward_ratio: riskRewardRatio
+          risk_reward_ratio: riskRewardRatio,
         }))
       }
     }
@@ -74,18 +76,18 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
     setError(null)
 
     try {
-      const tradePayload: any = { ...tradeData }
-      
+      const tradePayload = { ...tradeData }
+
       if (showSpread && spreadData.long_strike && spreadData.short_strike) {
         tradePayload.spread = spreadData
       }
 
-      const newTrade = await apiClient.createTrade(tradePayload)
-      
+      await apiClient.createTrade(tradePayload)
+
       if (onTradeCreated) {
-        onTradeCreated(newTrade)
+        onTradeCreated()
       }
-      
+
       // Reset form
       setTradeData({
         trade_date: new Date().toISOString().split('T')[0],
@@ -93,9 +95,9 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
         status: 'recommended',
         entry_signal_reason: '',
         contracts: 1,
-        notes: ''
+        notes: '',
       })
-      
+
       setSpreadData({
         spread_type: 'bull_call_spread',
         expiration_date: new Date().toISOString().split('T')[0],
@@ -107,9 +109,9 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
         max_profit: 0,
         max_loss: 0,
         breakeven: 0,
-        risk_reward_ratio: 1.0
+        risk_reward_ratio: 1.0,
       })
-      
+
       if (onClose) {
         onClose()
       }
@@ -125,10 +127,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-slate-900">Add New Trade</h3>
         {onClose && (
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600"
-          >
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
             ✕
           </button>
         )}
@@ -144,9 +143,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
         {/* Basic Trade Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Trade Date
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Trade Date</label>
             <input
               type="date"
               value={tradeData.trade_date || ''}
@@ -157,9 +154,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Trade Type
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Trade Type</label>
             <select
               value={tradeData.trade_type || 'paper'}
               onChange={(e) => handleTradeChange('trade_type', e.target.value)}
@@ -171,9 +166,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Status
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
             <select
               value={tradeData.status || 'recommended'}
               onChange={(e) => handleTradeChange('status', e.target.value)}
@@ -188,9 +181,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Contracts
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Contracts</label>
             <input
               type="number"
               min="1"
@@ -232,7 +223,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
         {showSpread && (
           <div className="border-t pt-4 space-y-4">
             <h4 className="text-md font-medium text-slate-800">Spread Details</h4>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -247,9 +238,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Spread Type
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Spread Type</label>
                 <select
                   value={spreadData.spread_type || 'bull_call_spread'}
                   onChange={(e) => handleSpreadChange('spread_type', e.target.value)}
@@ -260,9 +249,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Long Strike
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Long Strike</label>
                 <input
                   type="number"
                   step="0.01"
@@ -318,19 +305,27 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <div>
                   <span className="text-slate-600">Net Debit:</span>
-                  <span className="ml-1 font-medium">${spreadData.net_debit?.toFixed(2) || '0.00'}</span>
+                  <span className="ml-1 font-medium">
+                    ${spreadData.net_debit?.toFixed(2) || '0.00'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-600">Max Profit:</span>
-                  <span className="ml-1 font-medium">${spreadData.max_profit?.toFixed(2) || '0.00'}</span>
+                  <span className="ml-1 font-medium">
+                    ${spreadData.max_profit?.toFixed(2) || '0.00'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-600">Max Loss:</span>
-                  <span className="ml-1 font-medium">${spreadData.max_loss?.toFixed(2) || '0.00'}</span>
+                  <span className="ml-1 font-medium">
+                    ${spreadData.max_loss?.toFixed(2) || '0.00'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-600">R/R Ratio:</span>
-                  <span className="ml-1 font-medium">{spreadData.risk_reward_ratio?.toFixed(2) || '0.00'}</span>
+                  <span className="ml-1 font-medium">
+                    {spreadData.risk_reward_ratio?.toFixed(2) || '0.00'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -339,9 +334,7 @@ export const TradeInputPanel: React.FC<TradeInputPanelProps> = ({
 
         {/* Notes */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Notes
-          </label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
           <textarea
             value={tradeData.notes || ''}
             onChange={(e) => handleTradeChange('notes', e.target.value)}

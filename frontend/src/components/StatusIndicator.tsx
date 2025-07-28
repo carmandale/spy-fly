@@ -36,18 +36,19 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({ status, error 
 
   return (
     <div className="flex items-center space-x-2">
-      <div className={`h-3 w-3 rounded-full ${
-        status === 'connected' ? 'bg-green-600' :
-        status === 'disconnected' ? 'bg-yellow-600' :
-        status === 'error' ? 'bg-red-600' :
-        'bg-gray-600'
-      } ${status === 'loading' ? 'animate-pulse' : ''}`} />
-      <span className={`font-medium ${getStatusColor()}`}>
-        API Status: {getStatusText()}
-      </span>
-      {error && (
-        <span className="text-sm text-red-500">({error})</span>
-      )}
+      <div
+        className={`h-3 w-3 rounded-full ${
+          status === 'connected'
+            ? 'bg-green-600'
+            : status === 'disconnected'
+              ? 'bg-yellow-600'
+              : status === 'error'
+                ? 'bg-red-600'
+                : 'bg-gray-600'
+        } ${status === 'loading' ? 'animate-pulse' : ''}`}
+      />
+      <span className={`font-medium ${getStatusColor()}`}>API Status: {getStatusText()}</span>
+      {error && <span className="text-sm text-red-500">({error})</span>}
     </div>
   )
 }

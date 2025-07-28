@@ -28,11 +28,11 @@ check_servers() {
     local backend_running=false
     local frontend_running=false
     
-    if lsof -nP -iTCP:8001 -sTCP:LISTEN &>/dev/null; then
+    if lsof -nP -iTCP:8003 -sTCP:LISTEN &>/dev/null; then
         backend_running=true
     fi
     
-    if lsof -nP -iTCP:5174 -sTCP:LISTEN &>/dev/null; then
+    if lsof -nP -iTCP:3003 -sTCP:LISTEN &>/dev/null; then
         frontend_running=true
     fi
     
@@ -43,12 +43,12 @@ check_servers() {
         sleep 10  # Give servers time to start
         
         # Verify they started
-        if ! lsof -nP -iTCP:8001 -sTCP:LISTEN &>/dev/null; then
+        if ! lsof -nP -iTCP:8003 -sTCP:LISTEN &>/dev/null; then
             print_color "$RED" "❌ Backend failed to start"
             exit 1
         fi
         
-        if ! lsof -nP -iTCP:5174 -sTCP:LISTEN &>/dev/null; then
+        if ! lsof -nP -iTCP:3003 -sTCP:LISTEN &>/dev/null; then
             print_color "$RED" "❌ Frontend failed to start"
             exit 1
         fi

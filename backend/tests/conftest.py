@@ -1,17 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 
-from app.main import app
 from app.core.database import Base, get_db
-# Import all models to ensure they're registered with Base
-from app.models.db_models import (
-    MarketDataCache, SPYQuote, OptionContract, 
-    HistoricalPrice, APIRequestLog
-)
-from app.models.trading import Trade, TradeSpread, SentimentScore, Configuration, DailySummary
+from app.main import app
 
+# Import all models to ensure they're registered with Base
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
@@ -33,10 +28,10 @@ def override_get_db():
 def client():
     Base.metadata.create_all(bind=engine)
     app.dependency_overrides[get_db] = override_get_db
-    
+
     with TestClient(app) as test_client:
         yield test_client
-    
+
     Base.metadata.drop_all(bind=engine)
 
 
@@ -55,9 +50,9 @@ def test_session(test_engine):
     Base.metadata.create_all(bind=test_engine)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
     session = SessionLocal()
-    
+
     yield session
-    
+
     session.close()
     Base.metadata.drop_all(bind=test_engine)
 
@@ -67,9 +62,9 @@ def db():
     """Create a test database session for API endpoint tests."""
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
-    
+
     yield db
-    
+
     db.close()
     # Clean up tables after each test
     for table in reversed(Base.metadata.sorted_tables):

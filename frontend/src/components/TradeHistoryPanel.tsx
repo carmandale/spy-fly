@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { apiClient, Trade, TradeListResponse, TradeSummary } from '../api/client'
+import React, { useState, useEffect, useCallback } from 'react'
+import { apiClient, Trade, TradeSummary } from '../api/client'
 
 interface TradeHistoryPanelProps {
   refreshTrigger?: number
@@ -11,7 +11,7 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null)
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0)
   const [totalTrades, setTotalTrades] = useState(0)
@@ -22,59 +22,64 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
     status: '',
     trade_type: '',
     start_date: '',
-    end_date: ''
+    end_date: '',
   })
 
-  const loadTrades = async () => {
+  const loadTrades = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      
-      const params: any = {
+
+      const params: Record<string, string | number> = {
         skip: currentPage * pageSize,
-        limit: pageSize
+        limit: pageSize,
       }
-      
+
       // Add filters
       if (filters.status) params.status = filters.status
       if (filters.trade_type) params.trade_type = filters.trade_type
-      
+
       const response = await apiClient.getTrades(params)
       setTrades(response.trades)
       setTotalTrades(response.total)
-      
+
       // Load summary
-      const summaryParams: any = {}
+      const summaryParams: Record<string, string> = {}
       if (filters.start_date) summaryParams.start_date = filters.start_date
       if (filters.end_date) summaryParams.end_date = filters.end_date
-      
+
       const summaryResponse = await apiClient.getTradeSummary(summaryParams)
       setSummary(summaryResponse)
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load trades')
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, pageSize, filters])
 
   useEffect(() => {
     loadTrades()
-  }, [currentPage, filters, refreshTrigger])
+  }, [currentPage, filters, refreshTrigger, loadTrades])
 
   const handleFilterChange = (field: string, value: string) => {
-    setFilters(prev => ({ ...prev, [field]: value }))
+    setFilters((prev) => ({ ...prev, [field]: value }))
     setCurrentPage(0) // Reset to first page when filtering
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'entered': return 'bg-blue-100 text-blue-800'
-      case 'exited': return 'bg-green-100 text-green-800'
-      case 'stopped': return 'bg-red-100 text-red-800'
-      case 'recommended': return 'bg-yellow-100 text-yellow-800'
-      case 'skipped': return 'bg-slate-100 text-slate-800'
-      default: return 'bg-slate-100 text-slate-800'
+      case 'entered':
+        return 'bg-blue-100 text-blue-800'
+      case 'exited':
+        return 'bg-green-100 text-green-800'
+      case 'stopped':
+        return 'bg-red-100 text-red-800'
+      case 'recommended':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'skipped':
+        return 'bg-slate-100 text-slate-800'
+      default:
+        return 'bg-slate-100 text-slate-800'
     }
   }
 
@@ -82,7 +87,7 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
     if (value === null || value === undefined) return '-'
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'USD',
     }).format(value)
   }
 
@@ -116,13 +121,17 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
               <div className="text-sm text-slate-600">Win Rate</div>
             </div>
             <div className="text-center">
-              <div className={`text-2xl font-bold ${summary.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div
+                className={`text-2xl font-bold ${summary.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
                 {formatCurrency(summary.total_pnl)}
               </div>
               <div className="text-sm text-slate-600">Total P&L</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-slate-900">{formatCurrency(summary.average_win)}</div>
+              <div className="text-2xl font-bold text-slate-900">
+                {formatCurrency(summary.average_win)}
+              </div>
               <div className="text-sm text-slate-600">Avg Win</div>
             </div>
           </div>
@@ -147,7 +156,7 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
               <option value="skipped">Skipped</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
             <select
@@ -160,7 +169,7 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
               <option value="real">Real</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
             <input
@@ -170,7 +179,7 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
               className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
             <input
@@ -242,21 +251,31 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
                   <tr key={trade.id} className="border-b hover:bg-slate-50">
                     <td className="py-2">{formatDate(trade.trade_date)}</td>
                     <td className="py-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        trade.trade_type === 'real' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          trade.trade_type === 'real'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}
+                      >
                         {trade.trade_type}
                       </span>
                     </td>
                     <td className="py-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(trade.status)}`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(trade.status)}`}
+                      >
                         {trade.status}
                       </span>
                     </td>
                     <td className="py-2">{trade.contracts || '-'}</td>
                     <td className="py-2">{formatCurrency(trade.max_reward)}</td>
                     <td className="py-2">
-                      <span className={trade.net_pnl && trade.net_pnl < 0 ? 'text-red-600' : 'text-green-600'}>
+                      <span
+                        className={
+                          trade.net_pnl && trade.net_pnl < 0 ? 'text-red-600' : 'text-green-600'
+                        }
+                      >
                         {formatCurrency(trade.net_pnl)}
                       </span>
                     </td>
@@ -293,7 +312,7 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
                   ✕
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -302,7 +321,9 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700">Status</label>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(selectedTrade.status)}`}>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(selectedTrade.status)}`}
+                    >
                       {selectedTrade.status}
                     </span>
                   </div>
@@ -334,14 +355,20 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700">Net P&L</label>
-                    <div className={`font-medium ${selectedTrade.net_pnl && selectedTrade.net_pnl < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <div
+                      className={`font-medium ${selectedTrade.net_pnl && selectedTrade.net_pnl < 0 ? 'text-red-600' : 'text-green-600'}`}
+                    >
                       {formatCurrency(selectedTrade.net_pnl)}
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700">P&L %</label>
-                    <div className={`font-medium ${selectedTrade.pnl_percentage && selectedTrade.pnl_percentage < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {selectedTrade.pnl_percentage ? `${selectedTrade.pnl_percentage.toFixed(2)}%` : '-'}
+                    <div
+                      className={`font-medium ${selectedTrade.pnl_percentage && selectedTrade.pnl_percentage < 0 ? 'text-red-600' : 'text-green-600'}`}
+                    >
+                      {selectedTrade.pnl_percentage
+                        ? `${selectedTrade.pnl_percentage.toFixed(2)}%`
+                        : '-'}
                     </div>
                   </div>
                 </div>
@@ -349,7 +376,9 @@ export const TradeHistoryPanel: React.FC<TradeHistoryPanelProps> = ({ refreshTri
                 {selectedTrade.notes && (
                   <div>
                     <label className="block text-sm font-medium text-slate-700">Notes</label>
-                    <div className="text-slate-900 bg-slate-50 p-3 rounded">{selectedTrade.notes}</div>
+                    <div className="text-slate-900 bg-slate-50 p-3 rounded">
+                      {selectedTrade.notes}
+                    </div>
                   </div>
                 )}
 

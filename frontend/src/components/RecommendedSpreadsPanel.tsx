@@ -1,24 +1,22 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Copy, TrendingUp, Target, AlertTriangle } from 'lucide-react';
+import React from 'react'
+import { motion } from 'framer-motion'
+import { Copy, TrendingUp, Target, AlertTriangle } from 'lucide-react'
 interface SpreadRecommendation {
-  id: string;
-  longStrike: number;
-  shortStrike: number;
-  debit: number;
-  maxProfit: number;
-  maxLoss: number;
-  breakeven: number;
-  probability: number;
-  quantity: number;
-  expiration: string;
+  id: string
+  longStrike: number
+  shortStrike: number
+  debit: number
+  maxProfit: number
+  maxLoss: number
+  breakeven: number
+  probability: number
+  quantity: number
+  expiration: string
 }
 interface RecommendedSpreadsPanelProps {
-  recommendations: SpreadRecommendation[];
+  recommendations: SpreadRecommendation[]
 }
-const RecommendedSpreadsPanel: React.FC<RecommendedSpreadsPanelProps> = ({
-  recommendations
-}) => {
+const RecommendedSpreadsPanel: React.FC<RecommendedSpreadsPanelProps> = ({ recommendations }) => {
   const copyToClipboard = (spread: SpreadRecommendation) => {
     const orderDetails = `
 SPY Bull Call Spread (${spread.expiration})
@@ -29,19 +27,25 @@ Max Profit: $${spread.maxProfit.toFixed(2)}
 Max Loss: $${spread.maxLoss.toFixed(2)}
 Breakeven: $${spread.breakeven.toFixed(2)}
 Probability: ${spread.probability}%
-    `.trim();
-    navigator.clipboard.writeText(orderDetails);
-  };
-  return <motion.section className="bg-gray-800 border border-gray-700 rounded-lg p-6" initial={{
-    opacity: 0,
-    y: 20
-  }} animate={{
-    opacity: 1,
-    y: 0
-  }} transition={{
-    duration: 0.4,
-    delay: 0.2
-  }}>
+    `.trim()
+    navigator.clipboard.writeText(orderDetails)
+  }
+  return (
+    <motion.section
+      className="bg-gray-800 border border-gray-700 rounded-lg p-6"
+      initial={{
+        opacity: 0,
+        y: 20,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.4,
+        delay: 0.2,
+      }}
+    >
       <header className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-white">Recommended Spreads</h2>
         <div className="flex items-center space-x-2 text-green-400">
@@ -51,16 +55,23 @@ Probability: ${spread.probability}%
       </header>
 
       <div className="space-y-4">
-        {recommendations.map((spread, index) => <motion.article key={spread.id} className="bg-gray-900 border border-gray-600 rounded-lg p-4" initial={{
-        opacity: 0,
-        x: -20
-      }} animate={{
-        opacity: 1,
-        x: 0
-      }} transition={{
-        duration: 0.3,
-        delay: index * 0.1
-      }}>
+        {recommendations.map((spread, index) => (
+          <motion.article
+            key={spread.id}
+            className="bg-gray-900 border border-gray-600 rounded-lg p-4"
+            initial={{
+              opacity: 0,
+              x: -20,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            transition={{
+              duration: 0.3,
+              delay: index * 0.1,
+            }}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Strike Prices */}
               <div className="space-y-2">
@@ -87,7 +98,9 @@ Probability: ${spread.probability}%
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-300 text-sm">Max Profit:</span>
-                    <strong className="text-green-400 font-bold">${spread.maxProfit.toFixed(2)}</strong>
+                    <strong className="text-green-400 font-bold">
+                      ${spread.maxProfit.toFixed(2)}
+                    </strong>
                   </div>
                 </div>
               </div>
@@ -98,7 +111,9 @@ Probability: ${spread.probability}%
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <span className="text-gray-300 text-sm">Breakeven:</span>
-                    <strong className="text-yellow-400 font-bold">${spread.breakeven.toFixed(2)}</strong>
+                    <strong className="text-yellow-400 font-bold">
+                      ${spread.breakeven.toFixed(2)}
+                    </strong>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-300 text-sm">Probability:</span>
@@ -113,15 +128,23 @@ Probability: ${spread.probability}%
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Target className="w-4 h-4 text-gray-400" aria-hidden="true" />
-                    <span className="text-sm text-gray-300">Qty: <strong>{spread.quantity}</strong></span>
+                    <span className="text-sm text-gray-300">
+                      Qty: <strong>{spread.quantity}</strong>
+                    </span>
                   </div>
-                  <motion.button onClick={() => copyToClipboard(spread)} className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 
+                  <motion.button
+                    onClick={() => copyToClipboard(spread)}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 
                              text-white px-3 py-1 rounded text-sm font-medium transition-colors
-                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900" whileHover={{
-                scale: 1.05
-              }} whileTap={{
-                scale: 0.95
-              }} aria-label={`Copy order details for ${spread.longStrike}/${spread.shortStrike} spread`}>
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                    whileHover={{
+                      scale: 1.05,
+                    }}
+                    whileTap={{
+                      scale: 0.95,
+                    }}
+                    aria-label={`Copy order details for ${spread.longStrike}/${spread.shortStrike} spread`}
+                  >
                     <Copy className="w-4 h-4" aria-hidden="true" />
                     <span>Copy Order</span>
                   </motion.button>
@@ -134,12 +157,15 @@ Probability: ${spread.probability}%
               <div className="flex items-center space-x-2 text-yellow-400">
                 <AlertTriangle className="w-4 h-4" aria-hidden="true" />
                 <p className="text-xs">
-                  <strong>Risk Warning:</strong> 0DTE options carry high risk. Max loss: <strong>${spread.maxLoss.toFixed(2)}</strong> per spread
+                  <strong>Risk Warning:</strong> 0DTE options carry high risk. Max loss:{' '}
+                  <strong>${spread.maxLoss.toFixed(2)}</strong> per spread
                 </p>
               </div>
             </footer>
-          </motion.article>)}
+          </motion.article>
+        ))}
       </div>
-    </motion.section>;
-};
-export default RecommendedSpreadsPanel;
+    </motion.section>
+  )
+}
+export default RecommendedSpreadsPanel

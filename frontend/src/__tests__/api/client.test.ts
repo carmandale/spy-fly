@@ -15,12 +15,12 @@ describe('API Client', () => {
       status: 'healthy',
       timestamp: '2025-07-26T12:00:00Z',
       version: '0.1.0',
-      environment: 'development'
+      environment: 'development',
     }
 
-    ;(global.fetch as any).mockResolvedValueOnce({
+    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
-      json: async () => mockResponse
+      json: async () => mockResponse,
     })
 
     const result = await apiClient.health()
@@ -33,7 +33,7 @@ describe('API Client', () => {
   })
 
   it('should handle errors gracefully', async () => {
-    ;(global.fetch as any).mockRejectedValueOnce(new Error('Network error'))
+    ;(global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'))
 
     await expect(apiClient.health()).rejects.toThrow('Network error')
   })
