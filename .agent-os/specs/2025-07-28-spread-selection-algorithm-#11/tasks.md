@@ -7,14 +7,14 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ## Tasks
 
-- [ ] 1. Core Algorithm Infrastructure and Black-Scholes Implementation
-	- [ ] 1.1 Write comprehensive tests for Black-Scholes probability calculations with known mathematical results
-	- [ ] 1.2 Implement BlackScholesCalculator class with probability of profit calculation method
-	- [ ] 1.3 Create SpreadSelectionService base class with core algorithm structure and dependency injection
-	- [ ] 1.4 Write integration tests for VIX data integration with volatility calculations
-	- [ ] 1.5 Implement error handling for missing or invalid volatility data
-	- [ ] 1.6 Add mathematical precision validation against reference Black-Scholes implementations
-	- [ ] 1.7 Verify all tests pass and mathematical accuracy meets 0.01% tolerance requirement
+- [x] 1. Core Algorithm Infrastructure and Black-Scholes Implementation
+	- [x] 1.1 Write comprehensive tests for Black-Scholes probability calculations with known mathematical results
+	- [x] 1.2 Implement BlackScholesCalculator class with probability of profit calculation method
+	- [x] 1.3 Create SpreadSelectionService base class with core algorithm structure and dependency injection
+	- [x] 1.4 Write integration tests for VIX data integration with volatility calculations
+	- [x] 1.5 Implement error handling for missing or invalid volatility data
+	- [x] 1.6 Add mathematical precision validation against reference Black-Scholes implementations
+	- [x] 1.7 Verify all tests pass and mathematical accuracy meets 0.01% tolerance requirement
 
 - [ ] 2. Options Chain Processing and Spread Generation
 	- [ ] 2.1 Write tests for options chain data parsing and validation from Polygon.io format
