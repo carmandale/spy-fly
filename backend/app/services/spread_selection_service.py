@@ -9,11 +9,13 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Optional
 
+from app.models.spread import SpreadRecommendation
 from app.services.black_scholes_calculator import BlackScholesCalculator
 from app.services.market_service import MarketDataService
 from app.services.sentiment_calculator import SentimentCalculator
 from app.services.options_chain_processor import OptionsChainProcessor
 from app.services.spread_generator import SpreadGenerator
+from app.services.risk_validator import RiskValidator
 
 
 @dataclass
@@ -39,44 +41,6 @@ class SpreadConfiguration:
     sentiment_weight: float = 0.3  # Weight for sentiment in ranking
 
 
-@dataclass
-class SpreadRecommendation:
-    """Data structure for a spread recommendation."""
-
-    # Spread details
-    long_strike: float
-    short_strike: float
-    long_premium: float
-    short_premium: float
-    net_debit: float
-
-    # Risk metrics
-    max_risk: float
-    max_profit: float
-    risk_reward_ratio: float
-    probability_of_profit: float
-    breakeven_price: float
-
-    # Market data
-    long_bid: float
-    long_ask: float
-    short_bid: float
-    short_ask: float
-    long_volume: int
-    short_volume: int
-
-    # Analysis metadata
-    expected_value: float
-    sentiment_score: float
-    ranking_score: float
-    timestamp: datetime
-
-    # Order execution details
-    contracts_to_trade: int
-    total_cost: float
-    buying_power_used_pct: float
-
-
 class SpreadSelectionService:
     """
     Core service for SPY 0-DTE bull-call-spread selection and analysis.
@@ -93,6 +57,7 @@ class SpreadSelectionService:
         config: SpreadConfiguration | None = None,
         options_processor: Optional[OptionsChainProcessor] = None,
         spread_generator: Optional[SpreadGenerator] = None,
+        risk_validator: Optional[RiskValidator] = None,
     ):
         """
         Initialize the spread selection service with dependencies.
@@ -104,6 +69,7 @@ class SpreadSelectionService:
                 config: Configuration parameters (uses defaults if None)
                 options_processor: Options chain processor (creates default if None)
                 spread_generator: Spread generator (creates default if None)
+                risk_validator: Risk validator (creates default if None)
         """
         self.black_scholes = black_scholes_calculator
         self.market_service = market_service
@@ -113,6 +79,10 @@ class SpreadSelectionService:
         # Initialize enhanced processors
         self.options_processor = options_processor or OptionsChainProcessor()
         self.spread_generator = spread_generator or SpreadGenerator()
+        self.risk_validator = risk_validator or RiskValidator(
+            max_buying_power_pct=self.config.max_buying_power_pct,
+            min_risk_reward_ratio=self.config.min_risk_reward_ratio
+        )
 
         # Internal state
         self._current_sentiment_score: float | None = None
@@ -581,7 +551,14 @@ class SpreadSelectionService:
                 buying_power_used_pct=position_info['risk_pct']
             )
             
-            recommendations.append(recommendation)
+            # Validate the recommendation against risk constraints
+            validation_result = self.risk_validator.validate_spread(
+                recommendation, account_size
+            )
+            
+            # Only add if it passes all risk checks
+            if validation_result['is_valid']:
+                recommendations.append(recommendation)
             
         return recommendations
     
@@ -606,3 +583,8 @@ class SpreadSelectionService:
     def update_configuration(self, config: SpreadConfiguration) -> None:
         """Update service configuration."""
         self.config = config
+        # Update risk validator with new limits
+        self.risk_validator.update_configuration(
+            max_buying_power_pct=config.max_buying_power_pct,
+            min_risk_reward_ratio=config.min_risk_reward_ratio
+        )

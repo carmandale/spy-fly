@@ -16,7 +16,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 	- [x] 1.6 Add mathematical precision validation against reference Black-Scholes implementations
 	- [x] 1.7 Verify all tests pass and mathematical accuracy meets 0.01% tolerance requirement
 
-- [x] 2. Options Chain Processing and Spread Generation
+- [x] 2. Options Chain Processing and Spread Generation ✓ COMPLETED
 	- [x] 2.1 Write tests for options chain data parsing and validation from Polygon.io format
 	- [x] 2.2 Implement OptionsChainProcessor to filter 0-DTE SPY options and structure data
 	- [x] 2.3 Write tests for SpreadGenerator bull-call-spread combination logic
@@ -26,15 +26,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 	- [x] 2.7 Add performance tests ensuring < 10 second processing of 500+ option chains
 	- [x] 2.8 Verify all tests pass with realistic options data scenarios
 
-- [ ] 3. Risk Management and Position Sizing
-	- [ ] 3.1 Write tests for RiskValidator 5% buying power enforcement with edge cases
-	- [ ] 3.2 Implement RiskValidator class with hard-coded risk management constraints
-	- [ ] 3.3 Write tests for 1:1 risk/reward ratio validation with various spread configurations
-	- [ ] 3.4 Implement position sizing calculator with account size and risk tolerance inputs
-	- [ ] 3.5 Add tests for fractional contract handling and rounding logic
-	- [ ] 3.6 Write tests ensuring no recommendations exceed limits under any conditions
-	- [ ] 3.7 Implement validation that prevents recommendations below minimum criteria
-	- [ ] 3.8 Verify all tests pass and risk constraints are absolutely enforced
+- [x] 3. Risk Management and Position Sizing ✓ COMPLETED
+	- [x] 3.1 Write tests for RiskValidator 5% buying power enforcement with edge cases
+	- [x] 3.2 Implement RiskValidator class with hard-coded risk management constraints
+	- [x] 3.3 Write tests for 1:1 risk/reward ratio validation with various spread configurations
+	- [x] 3.4 Implement position sizing calculator with account size and risk tolerance inputs
+	- [x] 3.5 Add tests for fractional contract handling and rounding logic
+	- [x] 3.6 Write tests ensuring no recommendations exceed limits under any conditions
+	- [x] 3.7 Implement validation that prevents recommendations below minimum criteria
+	- [x] 3.8 Verify all tests pass and risk constraints are absolutely enforced
 
 - [ ] 4. Ranking Algorithm and Trade Recommendation Engine
 	- [ ] 4.1 Write tests for expected value calculation using probability and risk/reward metrics
