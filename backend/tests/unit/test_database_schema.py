@@ -242,7 +242,7 @@ class TestDatabaseModels:
 
         # Read - find 0-DTE options
         today = datetime.now(UTC).date()
-        zero_dte = (
+        (
             test_session.query(OptionContract)
             .filter(
                 OptionContract.expiration_date == today,

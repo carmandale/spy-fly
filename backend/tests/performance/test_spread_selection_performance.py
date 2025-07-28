@@ -281,7 +281,7 @@ class TestSpreadSelectionPerformance:
         calculator = BlackScholesCalculator()
         start = time.time()
         for spread in filtered[:100]:  # Sample 100 spreads
-            prob = calculator.probability_of_profit(
+            calculator.probability_of_profit(
                 spot_price=spot_price,
                 strike_price=spread.breakeven,
                 time_to_expiry=1 / 365,

@@ -13,13 +13,13 @@ class TestRateLimiter:
 
     def test_allow_initial_requests(self, limiter):
         # Should allow first 5 requests
-        for i in range(5):
+        for _i in range(5):
             assert limiter.check() is True
             limiter.consume()
 
     def test_block_when_limit_exceeded(self, limiter):
         # Consume all tokens
-        for i in range(5):
+        for _i in range(5):
             limiter.check()
             limiter.consume()
 
@@ -28,7 +28,7 @@ class TestRateLimiter:
 
     def test_tokens_replenish_over_time(self, limiter):
         # Consume all tokens
-        for i in range(5):
+        for _i in range(5):
             limiter.consume()
 
         # Should be blocked
@@ -42,7 +42,7 @@ class TestRateLimiter:
 
     def test_get_wait_time(self, limiter):
         # Consume all tokens
-        for i in range(5):
+        for _i in range(5):
             limiter.consume()
 
         # Get wait time for next token
@@ -56,7 +56,7 @@ class TestRateLimiter:
         limiter.consume()
         assert limiter.get_remaining() == 4
 
-        for i in range(4):
+        for _i in range(4):
             limiter.consume()
 
         assert limiter.get_remaining() == 0
@@ -84,7 +84,7 @@ class TestRateLimiter:
                 consumed.append(1)
 
         threads = []
-        for i in range(10):
+        for _i in range(10):
             t = threading.Thread(target=try_consume)
             threads.append(t)
             t.start()

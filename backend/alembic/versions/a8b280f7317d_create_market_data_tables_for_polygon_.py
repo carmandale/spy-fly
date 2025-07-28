@@ -1,7 +1,7 @@
 """Create market data tables for Polygon.io integration
 
 Revision ID: a8b280f7317d
-Revises: 
+Revises:
 Create Date: 2025-07-27 08:47:33.951794
 
 """

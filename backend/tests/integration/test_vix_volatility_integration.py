@@ -200,7 +200,7 @@ class TestVIXVolatilityIntegration:
     async def test_vix_data_freshness_validation(self):
         """Test validation of VIX data freshness."""
         old_timestamp = datetime(2020, 1, 1)  # Very old data
-        recent_timestamp = datetime.now()
+        datetime.now()
 
         # Test with old VIX data
         mock_vix_data_old = {"price": 20.0, "timestamp": old_timestamp}

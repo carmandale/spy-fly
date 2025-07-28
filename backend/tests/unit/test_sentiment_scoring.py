@@ -87,7 +87,7 @@ class TestTechnicalIndicators:
     def test_rsi_calculation(self, sample_prices):
         rsi = calculate_rsi(sample_prices)
         assert 0 <= rsi <= 100
-        assert isinstance(rsi, (int, float))
+        assert isinstance(rsi, int | float)
 
     def test_rsi_scoring_neutral(self):
         score = score_rsi(55.0)

@@ -70,7 +70,6 @@ class TestPolygonClient:
 
     @pytest.mark.asyncio
     async def test_get_quote_not_found(self, client):
-        mock_response = {"status": "error", "message": "Ticker not found"}
 
         with patch.object(
             client, "_make_request", side_effect=PolygonAPIError("Ticker not found")
