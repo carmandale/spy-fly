@@ -223,7 +223,16 @@ class SentimentCalculator:
             # Calculate technical indicators
             prices = pd.Series([bar["close"] for bar in spy_history["bars"]])
             rsi_value = calculate_rsi(prices) if len(prices) >= 15 else None
-            ma50_value = prices.rolling(window=50).mean().iloc[-1] if len(prices) >= 50 else None
+            
+            # Use flexible MA calculation - prefer MA50 but fall back to available data
+            if len(prices) >= 50:
+                ma50_value = prices.rolling(window=50).mean().iloc[-1]
+            elif len(prices) >= 20:
+                # Use shorter MA as proxy if we don't have 50 days
+                ma50_value = prices.rolling(window=len(prices)//2).mean().iloc[-1]
+            else:
+                ma50_value = None
+                
             bollinger_position = calculate_bollinger_position(prices) if len(prices) >= 20 else None
             
             # Score each component
@@ -234,7 +243,7 @@ class SentimentCalculator:
             )
             rsi_score = score_rsi(rsi_value)
             ma50_score = score_ma50(prices.iloc[-1], ma50_value) if ma50_value else ComponentScore(
-                score=0, value=0, label="Insufficient data for MA50"
+                score=0, value=0, label=f"Insufficient data for MA (need 20+ days, have {len(prices)})"
             )
             bollinger_score = score_bollinger(bollinger_position)
             news_score = score_news()

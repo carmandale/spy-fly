@@ -17,6 +17,7 @@
     "test:e2e:install": "playwright install"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.9",
     "lucide-react": "^0.526.0",

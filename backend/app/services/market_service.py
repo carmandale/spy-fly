@@ -48,13 +48,15 @@ class MarketDataService:
         # Check cache first
         cached_data = self.cache.get(cache_key)
         if cached_data:
-            return QuoteResponse(**cached_data, cached=True)
+            cached_data["cached"] = True
+            return QuoteResponse(**cached_data)
         
         # Check rate limit
         if not self.rate_limiter.check():
             # If rate limited, return cached data if available
             if cached_data:
-                return QuoteResponse(**cached_data, cached=True)
+                cached_data["cached"] = True
+                return QuoteResponse(**cached_data)
             
             wait_time = self.rate_limiter.get_wait_time()
             raise MarketDataError(
@@ -102,7 +104,8 @@ class MarketDataService:
         except Exception as e:
             # If API fails and we have cached data, return it
             if cached_data:
-                return QuoteResponse(**cached_data, cached=True)
+                cached_data["cached"] = True
+                return QuoteResponse(**cached_data)
             raise MarketDataError(f"Failed to fetch quote: {str(e)}")
     
     async def get_spy_options(
@@ -123,12 +126,14 @@ class MarketDataService:
         # Check cache
         cached_data = self.cache.get(cache_key)
         if cached_data:
-            return OptionChainResponse(**cached_data, cached=True)
+            cached_data["cached"] = True
+            return OptionChainResponse(**cached_data)
         
         # Check rate limit
         if not self.rate_limiter.check():
             if cached_data:
-                return OptionChainResponse(**cached_data, cached=True)
+                cached_data["cached"] = True
+                return OptionChainResponse(**cached_data)
             
             wait_time = self.rate_limiter.get_wait_time()
             raise MarketDataError(
@@ -187,7 +192,8 @@ class MarketDataService:
             
         except Exception as e:
             if cached_data:
-                return OptionChainResponse(**cached_data, cached=True)
+                cached_data["cached"] = True
+                return OptionChainResponse(**cached_data)
             raise MarketDataError(f"Failed to fetch options: {str(e)}")
     
     async def get_historical_data(
@@ -210,12 +216,14 @@ class MarketDataService:
         # Check cache
         cached_data = self.cache.get(cache_key)
         if cached_data:
-            return HistoricalDataResponse(**cached_data, cached=True)
+            cached_data["cached"] = True
+            return HistoricalDataResponse(**cached_data)
         
         # Check rate limit
         if not self.rate_limiter.check():
             if cached_data:
-                return HistoricalDataResponse(**cached_data, cached=True)
+                cached_data["cached"] = True
+                return HistoricalDataResponse(**cached_data)
             
             wait_time = self.rate_limiter.get_wait_time()
             raise MarketDataError(
@@ -268,5 +276,6 @@ class MarketDataService:
             
         except Exception as e:
             if cached_data:
-                return HistoricalDataResponse(**cached_data, cached=True)
+                cached_data["cached"] = True
+                return HistoricalDataResponse(**cached_data)
             raise MarketDataError(f"Failed to fetch historical data: {str(e)}")
