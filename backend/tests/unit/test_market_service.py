@@ -91,7 +91,15 @@ class TestMarketDataService:
             "ticker": "SPY",
             "price": 566.00,
             "volume": 40000000,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "market_status": "regular",
+            "change": 1.23,
+            "change_percent": 0.22,
+            "previous_close": 564.77,
+            "bid": 565.98,
+            "ask": 566.02,
+            "bid_size": 100,
+            "ask_size": 200
         }
         service.cache.set(cache_key, cached_quote, ttl=60)
         
@@ -162,7 +170,8 @@ class TestMarketDataService:
         )
         mock_polygon_client.get_option_chain.return_value = mock_chain
         
-        # Filter for calls only
+        # Filter for calls only with strike range of 5
+        # With underlying at 570, range of 5 means strikes 565-575 (3 strikes)
         result = await service.get_spy_options(
             expiration=date(2025, 7, 26),
             option_type="call",
@@ -171,7 +180,16 @@ class TestMarketDataService:
         
         # Should only have calls
         assert all(opt.type == "call" for opt in result.options)
-        assert len(result.options) == 5
+        # With underlying at 570 and range of 5, we get strikes: 565, 570, 575
+        assert len(result.options) == 3
+        
+        # Test with larger strike range to get all 5 calls
+        result_all = await service.get_spy_options(
+            expiration=date(2025, 7, 26),
+            option_type="call",
+            strike_range=10
+        )
+        assert len(result_all.options) == 5
     
     @pytest.mark.asyncio
     async def test_historical_data_caching(self, service, mock_polygon_client):

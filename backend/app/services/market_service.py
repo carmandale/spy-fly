@@ -1,6 +1,7 @@
 """Market data service layer."""
 from datetime import date, datetime, timedelta
 from typing import Optional, List
+from zoneinfo import ZoneInfo
 
 from app.services.polygon_client import PolygonClient
 from app.services.cache import MarketDataCache
@@ -27,16 +28,30 @@ class MarketDataService:
         self.rate_limiter = rate_limiter
     
     def _check_market_hours(self) -> str:
-        """Determine current market session."""
-        now = datetime.now()
-        market_open = now.replace(hour=9, minute=30, second=0)
-        market_close = now.replace(hour=16, minute=0, second=0)
+        """Determine current market session based on Eastern Time.
         
-        if now.weekday() >= 5:  # Weekend
+        Market hours are 9:30 AM - 4:00 PM ET (Eastern Time).
+        This method correctly handles EDT/EST transitions.
+        
+        Returns:
+            str: Market status - "regular", "pre-market", "after-hours", or "closed"
+        """
+        # Get current time in Eastern Time (handles EDT/EST automatically)
+        et_tz = ZoneInfo("America/New_York")
+        now_et = datetime.now(et_tz)
+        
+        # Define market hours in ET
+        market_open = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
+        market_close = now_et.replace(hour=16, minute=0, second=0, microsecond=0)
+        
+        # Check if weekend (Saturday=5, Sunday=6)
+        if now_et.weekday() >= 5:
             return "closed"
-        elif now < market_open:
+        
+        # Check market session
+        if now_et < market_open:
             return "pre-market"
-        elif now > market_close:
+        elif now_et > market_close:
             return "after-hours"
         else:
             return "regular"
