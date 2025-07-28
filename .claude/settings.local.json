@@ -64,7 +64,9 @@
       "Bash(./start.sh:*)",
       "Bash(uv add:*)",
       "Bash(gh pr merge:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr close:*)"
     ],
     "deny": []
   }

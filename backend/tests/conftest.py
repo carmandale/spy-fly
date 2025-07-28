@@ -10,6 +10,7 @@ from app.models.db_models import (
     MarketDataCache, SPYQuote, OptionContract, 
     HistoricalPrice, APIRequestLog
 )
+from app.models.trading import Trade, TradeSpread, SentimentScore, Configuration, DailySummary
 
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -59,3 +60,18 @@ def test_session(test_engine):
     
     session.close()
     Base.metadata.drop_all(bind=test_engine)
+
+
+@pytest.fixture(scope="function")
+def db():
+    """Create a test database session for API endpoint tests."""
+    Base.metadata.create_all(bind=engine)
+    db = TestingSessionLocal()
+    
+    yield db
+    
+    db.close()
+    # Clean up tables after each test
+    for table in reversed(Base.metadata.sorted_tables):
+        db.execute(table.delete())
+    db.commit()
