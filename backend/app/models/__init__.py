@@ -32,6 +32,14 @@ from app.models.db_models import (
     APIRequestLog
 )
 
+from app.models.trading import (
+    Trade,
+    SentimentScore,
+    TradeSpread,
+    Configuration,
+    DailySummary
+)
+
 __all__ = [
     # Pydantic models
     "Quote",
@@ -55,5 +63,10 @@ __all__ = [
     "SPYQuote",
     "OptionContract",
     "HistoricalPrice",
-    "APIRequestLog"
+    "APIRequestLog",
+    "Trade",
+    "SentimentScore",
+    "TradeSpread",
+    "Configuration",
+    "DailySummary"
 ]
