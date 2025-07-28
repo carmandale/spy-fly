@@ -51,7 +51,14 @@
       "Bash(python -m pytest tests/unit/test_polygon_client.py -v)",
       "Bash(grep:*)",
       "Bash(python:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(sw_vers)",
+      "Bash(cd:*)",
+      "Bash(gh issue comment:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh issue list:*)"
     ],
     "deny": []
   }
