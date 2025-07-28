@@ -67,6 +67,12 @@
       "Bash(git rebase:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr close:*)",
+      "Bash(cd:*)",
+      "Bash(ruff check:*)",
+      "Bash(black:*)",
+      "Bash(cd:*)",
+      "Bash(npm run lint)",
+      "Bash(cd:*)",
       "Bash(cd:*)"
     ],
     "deny": []

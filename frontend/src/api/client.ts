@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003'
 
 interface HealthResponse {
   status: string
@@ -66,7 +66,7 @@ interface MarketStatus {
 
 interface TradeSpread {
   id?: number
-  trade_id?: number  
+  trade_id?: number
   spread_type: string
   expiration_date: string
   long_strike: number
@@ -165,7 +165,11 @@ class ApiClient {
     return this.request<QuoteResponse>(`/api/v1/market/quote/${ticker}`)
   }
 
-  async getOptions(ticker: string, expiration: string, optionType?: 'call' | 'put'): Promise<OptionChainResponse> {
+  async getOptions(
+    ticker: string,
+    expiration: string,
+    optionType?: 'call' | 'put'
+  ): Promise<OptionChainResponse> {
     const params = new URLSearchParams({ expiration })
     if (optionType) params.append('option_type', optionType)
     return this.request<OptionChainResponse>(`/api/v1/market/options/${ticker}?${params}`)
@@ -235,8 +239,8 @@ class ApiClient {
     return this.request<TradeSummary>(`/api/v1/trades/summary${query ? `?${query}` : ''}`)
   }
 
-  async getRecentActivity(limit = 10): Promise<any[]> {
-    return this.request<any[]>(`/api/v1/trades/recent/activity?limit=${limit}`)
+  async getRecentActivity(limit = 10): Promise<Trade[]> {
+    return this.request<Trade[]>(`/api/v1/trades/recent/activity?limit=${limit}`)
   }
 }
 

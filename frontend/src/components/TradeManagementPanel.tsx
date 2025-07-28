@@ -1,15 +1,14 @@
 import React, { useState } from 'react'
 import { TradeInputPanel } from './TradeInputPanel'
 import { TradeHistoryPanel } from './TradeHistoryPanel'
-import { Trade } from '../api/client'
 
 export const TradeManagementPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'history' | 'input'>('history')
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  const handleTradeCreated = (trade: Trade) => {
+  const handleTradeCreated = () => {
     // Refresh the history panel
-    setRefreshTrigger(prev => prev + 1)
+    setRefreshTrigger((prev) => prev + 1)
     // Switch back to history tab to show the new trade
     setActiveTab('history')
   }
@@ -47,7 +46,7 @@ export const TradeManagementPanel: React.FC = () => {
         {activeTab === 'history' ? (
           <TradeHistoryPanel refreshTrigger={refreshTrigger} />
         ) : (
-          <TradeInputPanel 
+          <TradeInputPanel
             onTradeCreated={handleTradeCreated}
             onClose={() => setActiveTab('history')}
           />

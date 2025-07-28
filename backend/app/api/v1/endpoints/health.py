@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from fastapi import APIRouter
 
 from app.config import settings
@@ -12,5 +13,5 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "version": settings.version,
-        "environment": settings.environment
+        "environment": settings.environment,
     }

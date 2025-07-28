@@ -2,32 +2,32 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TradeSpreadBase(BaseModel):
     """Base schema for trade spread data."""
+
     spread_type: str = Field(default="bull_call_spread")
     expiration_date: date
-    
+
     # Long leg
     long_strike: Decimal = Field(decimal_places=2)
     long_premium: Decimal = Field(decimal_places=2)
-    long_iv: Optional[Decimal] = Field(None, decimal_places=2)
-    long_delta: Optional[Decimal] = Field(None, decimal_places=4)
-    long_gamma: Optional[Decimal] = Field(None, decimal_places=4)
-    long_theta: Optional[Decimal] = Field(None, decimal_places=4)
-    
+    long_iv: Decimal | None = Field(None, decimal_places=2)
+    long_delta: Decimal | None = Field(None, decimal_places=4)
+    long_gamma: Decimal | None = Field(None, decimal_places=4)
+    long_theta: Decimal | None = Field(None, decimal_places=4)
+
     # Short leg
     short_strike: Decimal = Field(decimal_places=2)
     short_premium: Decimal = Field(decimal_places=2)
-    short_iv: Optional[Decimal] = Field(None, decimal_places=2)
-    short_delta: Optional[Decimal] = Field(None, decimal_places=4)
-    short_gamma: Optional[Decimal] = Field(None, decimal_places=4)
-    short_theta: Optional[Decimal] = Field(None, decimal_places=4)
-    
+    short_iv: Decimal | None = Field(None, decimal_places=2)
+    short_delta: Decimal | None = Field(None, decimal_places=4)
+    short_gamma: Decimal | None = Field(None, decimal_places=4)
+    short_theta: Decimal | None = Field(None, decimal_places=4)
+
     # Spread metrics
     net_debit: Decimal = Field(decimal_places=2)
     max_profit: Decimal = Field(decimal_places=2)
@@ -38,13 +38,15 @@ class TradeSpreadBase(BaseModel):
 
 class TradeSpreadCreate(TradeSpreadBase):
     """Schema for creating a new trade spread."""
+
     pass
 
 
 class TradeSpreadResponse(TradeSpreadBase):
     """Schema for trade spread responses."""
+
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     trade_id: int
     created_at: datetime
@@ -52,74 +54,80 @@ class TradeSpreadResponse(TradeSpreadBase):
 
 class TradeBase(BaseModel):
     """Base schema for trade data."""
+
     trade_date: date
     trade_type: str = Field(..., pattern="^(paper|real)$")
     status: str = Field(..., pattern="^(recommended|skipped|entered|exited|stopped)$")
-    
+
     # Entry details
-    entry_time: Optional[datetime] = None
-    entry_sentiment_score_id: Optional[int] = None
-    entry_signal_reason: Optional[str] = None
-    
+    entry_time: datetime | None = None
+    entry_sentiment_score_id: int | None = None
+    entry_signal_reason: str | None = None
+
     # Position details
-    contracts: Optional[int] = None
-    max_risk: Optional[Decimal] = Field(None, decimal_places=2)
-    max_reward: Optional[Decimal] = Field(None, decimal_places=2)
-    probability_of_profit: Optional[Decimal] = Field(None, decimal_places=2)
-    
+    contracts: int | None = None
+    max_risk: Decimal | None = Field(None, decimal_places=2)
+    max_reward: Decimal | None = Field(None, decimal_places=2)
+    probability_of_profit: Decimal | None = Field(None, decimal_places=2)
+
     # Exit details
-    exit_time: Optional[datetime] = None
-    exit_reason: Optional[str] = None
-    exit_price: Optional[Decimal] = Field(None, decimal_places=2)
-    
+    exit_time: datetime | None = None
+    exit_reason: str | None = None
+    exit_price: Decimal | None = Field(None, decimal_places=2)
+
     # P/L calculation
-    gross_pnl: Optional[Decimal] = Field(None, decimal_places=2)
-    commissions: Optional[Decimal] = Field(None, decimal_places=2)
-    net_pnl: Optional[Decimal] = Field(None, decimal_places=2)
-    pnl_percentage: Optional[Decimal] = Field(None, decimal_places=2)
-    
+    gross_pnl: Decimal | None = Field(None, decimal_places=2)
+    commissions: Decimal | None = Field(None, decimal_places=2)
+    net_pnl: Decimal | None = Field(None, decimal_places=2)
+    pnl_percentage: Decimal | None = Field(None, decimal_places=2)
+
     # Metadata
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class TradeCreate(TradeBase):
     """Schema for creating a new trade."""
-    spread: Optional[TradeSpreadCreate] = None
+
+    spread: TradeSpreadCreate | None = None
 
 
 class TradeUpdate(BaseModel):
     """Schema for updating an existing trade."""
-    status: Optional[str] = Field(None, pattern="^(recommended|skipped|entered|exited|stopped)$")
-    
+
+    status: str | None = Field(
+        None, pattern="^(recommended|skipped|entered|exited|stopped)$"
+    )
+
     # Entry details
-    entry_time: Optional[datetime] = None
-    entry_signal_reason: Optional[str] = None
-    
+    entry_time: datetime | None = None
+    entry_signal_reason: str | None = None
+
     # Position details
-    contracts: Optional[int] = None
-    max_risk: Optional[Decimal] = Field(None, decimal_places=2)
-    max_reward: Optional[Decimal] = Field(None, decimal_places=2)
-    probability_of_profit: Optional[Decimal] = Field(None, decimal_places=2)
-    
+    contracts: int | None = None
+    max_risk: Decimal | None = Field(None, decimal_places=2)
+    max_reward: Decimal | None = Field(None, decimal_places=2)
+    probability_of_profit: Decimal | None = Field(None, decimal_places=2)
+
     # Exit details
-    exit_time: Optional[datetime] = None
-    exit_reason: Optional[str] = None
-    exit_price: Optional[Decimal] = Field(None, decimal_places=2)
-    
+    exit_time: datetime | None = None
+    exit_reason: str | None = None
+    exit_price: Decimal | None = Field(None, decimal_places=2)
+
     # P/L calculation
-    gross_pnl: Optional[Decimal] = Field(None, decimal_places=2)
-    commissions: Optional[Decimal] = Field(None, decimal_places=2)
-    net_pnl: Optional[Decimal] = Field(None, decimal_places=2)
-    pnl_percentage: Optional[Decimal] = Field(None, decimal_places=2)
-    
+    gross_pnl: Decimal | None = Field(None, decimal_places=2)
+    commissions: Decimal | None = Field(None, decimal_places=2)
+    net_pnl: Decimal | None = Field(None, decimal_places=2)
+    pnl_percentage: Decimal | None = Field(None, decimal_places=2)
+
     # Metadata
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class TradeResponse(TradeBase):
     """Schema for trade responses."""
+
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     created_at: datetime
     updated_at: datetime
@@ -127,12 +135,14 @@ class TradeResponse(TradeBase):
 
 class TradeWithSpread(TradeResponse):
     """Schema for trade responses including spread data."""
-    spread: Optional[TradeSpreadResponse] = None
+
+    spread: TradeSpreadResponse | None = None
 
 
 class TradeListResponse(BaseModel):
     """Schema for paginated trade list responses."""
-    trades: List[TradeResponse]
+
+    trades: list[TradeResponse]
     total: int
     skip: int
     limit: int
@@ -140,6 +150,7 @@ class TradeListResponse(BaseModel):
 
 class TradeSummary(BaseModel):
     """Schema for trade summary statistics."""
+
     total_trades: int
     winning_trades: int
     losing_trades: int

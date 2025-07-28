@@ -12,8 +12,8 @@ export default defineConfig({
 		globals: true,
 		css: true,
 		env: {
-			VITE_API_BASE_URL: 'http://localhost:8001',
-			VITE_WS_BASE_URL: 'ws://localhost:8001'
+			VITE_API_BASE_URL: 'http://localhost:8003',
+			VITE_WS_BASE_URL: 'ws://localhost:8003'
 		}
 	},
 })

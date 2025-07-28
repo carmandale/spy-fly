@@ -52,8 +52,8 @@
 
 ### Infrastructure
 - **Application Hosting:** Local Mac (development)
-- **Backend Port:** 8001 (unique to avoid conflicts)
-- **Frontend Port:** 5174 (unique to avoid conflicts)
+- **Backend Port:** 8003 (unique to avoid conflicts)
+- **Frontend Port:** 3003 (unique to avoid conflicts)
 - **Database Hosting:** Local SQLite file
 - **Asset Hosting:** Vite dev server (local)
 - **Production Build:** Static files served by FastAPI
