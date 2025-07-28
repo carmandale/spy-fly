@@ -7,11 +7,13 @@ calculations, risk management, and market data to generate trade recommendations
 
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Optional
 
 from app.services.black_scholes_calculator import BlackScholesCalculator
 from app.services.market_service import MarketDataService
 from app.services.sentiment_calculator import SentimentCalculator
+from app.services.options_chain_processor import OptionsChainProcessor
+from app.services.spread_generator import SpreadGenerator
 
 
 @dataclass
@@ -89,6 +91,8 @@ class SpreadSelectionService:
         market_service: MarketDataService,
         sentiment_calculator: SentimentCalculator,
         config: SpreadConfiguration | None = None,
+        options_processor: Optional[OptionsChainProcessor] = None,
+        spread_generator: Optional[SpreadGenerator] = None,
     ):
         """
         Initialize the spread selection service with dependencies.
@@ -98,11 +102,17 @@ class SpreadSelectionService:
                 market_service: Market data service for prices and option chains
                 sentiment_calculator: Sentiment analysis service
                 config: Configuration parameters (uses defaults if None)
+                options_processor: Options chain processor (creates default if None)
+                spread_generator: Spread generator (creates default if None)
         """
         self.black_scholes = black_scholes_calculator
         self.market_service = market_service
         self.sentiment_calculator = sentiment_calculator
         self.config = config or SpreadConfiguration()
+        
+        # Initialize enhanced processors
+        self.options_processor = options_processor or OptionsChainProcessor()
+        self.spread_generator = spread_generator or SpreadGenerator()
 
         # Internal state
         self._current_sentiment_score: float | None = None
@@ -136,22 +146,54 @@ class SpreadSelectionService:
             return []
 
         # Step 3: Get option chain data
-        option_chain = await self._get_current_option_chain()
+        option_chain_response = await self._get_current_option_chain()
 
-        # Step 4: Generate all possible spread combinations
-        spread_candidates = self._generate_spread_combinations(option_chain)
+        # Step 4: Process options with enhanced processor
+        options_df = self.options_processor.prepare_for_spread_generation(
+            option_chain_response,
+            spot_price=self._current_spy_price,
+            config={
+                'filter_zero_dte': True,
+                'validate_data': True,
+                'min_volume': self.config.min_volume,
+                'max_bid_ask_spread_pct': self.config.max_bid_ask_spread_pct,
+                'min_otm_points': -5,  # Allow slightly ITM
+                'max_otm_points': 20   # Up to 20 points OTM
+            }
+        )
+        
+        if options_df.empty:
+            return []  # No valid options to process
 
-        # Step 5: Filter spreads by risk management criteria
-        valid_spreads = self._filter_spreads_by_criteria(spread_candidates)
+        # Step 5: Generate spreads with enhanced generator
+        spread_combinations = self.spread_generator.generate_filtered_spreads(
+            options_df,
+            config={
+                'min_risk_reward_ratio': self.config.min_risk_reward_ratio,
+                'min_spread_width': 1.0,
+                'max_spread_width': 20.0,
+                'min_liquidity_score': 50.0,
+                'use_vectorized': True  # Use fast vectorized operations
+            }
+        )
+        
+        if not spread_combinations:
+            return []  # No valid spreads found
 
-        # Step 6: Calculate probability and risk metrics for each spread
-        analyzed_spreads = await self._analyze_spreads(valid_spreads, account_size)
+        # Step 6: Calculate probability and position sizing for each spread
+        recommendations = await self._analyze_spread_combinations(
+            spread_combinations, options_df, account_size
+        )
 
-        # Step 7: Rank spreads by expected value and sentiment
-        ranked_spreads = self._rank_spreads(analyzed_spreads)
+        # Step 7: Filter by probability requirements
+        valid_recommendations = [
+            rec for rec in recommendations 
+            if rec.probability_of_profit >= self.config.min_probability_of_profit
+        ]
 
-        # Step 8: Return top recommendations
-        return ranked_spreads[:max_recommendations]
+        # Step 8: Rank and return top recommendations
+        ranked_recommendations = self._rank_recommendations(valid_recommendations)
+        return ranked_recommendations[:max_recommendations]
 
     async def _update_market_context(self) -> None:
         """Update current market context (SPY price, VIX, sentiment)."""
@@ -192,7 +234,7 @@ class SpreadSelectionService:
 
         return True
 
-    async def _get_current_option_chain(self) -> dict[str, Any]:
+    async def _get_current_option_chain(self) -> Any:
         """
         Get current SPY option chain for 0-DTE options.
 
@@ -207,20 +249,7 @@ class SpreadSelectionService:
             expiration=today, option_type="call"  # Only get calls for bull-call-spreads
         )
 
-        # Convert to expected format
-        calls_data = []
-        for option in option_chain_response.options:
-            calls_data.append(
-                {
-                    "strike": option.strike,
-                    "bid": option.bid,
-                    "ask": option.ask,
-                    "volume": option.volume,
-                    "open_interest": getattr(option, "open_interest", 0),
-                }
-            )
-
-        return {"calls": calls_data}
+        return option_chain_response
 
     def _generate_spread_combinations(
         self, option_chain: dict[str, Any]
@@ -472,6 +501,101 @@ class SpreadSelectionService:
 
         Returns:
                 List sorted by ranking score (highest first)
+        """
+        return sorted(recommendations, key=lambda x: x.ranking_score, reverse=True)
+    
+    async def _analyze_spread_combinations(
+        self,
+        spread_combinations: list,
+        options_df: Any,
+        account_size: float
+    ) -> list[SpreadRecommendation]:
+        """
+        Analyze spread combinations and create recommendations.
+        
+        Args:
+            spread_combinations: List of SpreadCombination objects
+            options_df: Options DataFrame (for additional data if needed)
+            account_size: Account size for position sizing
+            
+        Returns:
+            List of SpreadRecommendation objects
+        """
+        recommendations = []
+        
+        for spread in spread_combinations:
+            # Calculate position sizing
+            position_info = self.spread_generator.calculate_position_size(
+                spread,
+                account_size=account_size,
+                max_risk_pct=self.config.max_buying_power_pct
+            )
+            
+            # Calculate probability of profit using Black-Scholes
+            time_to_expiry = 1.0 / 365  # 0-DTE approximation
+            volatility = self._current_vix / 100 if self._current_vix else 0.20
+            
+            probability_of_profit = self.black_scholes.probability_of_profit(
+                spot_price=self._current_spy_price,
+                strike_price=spread.breakeven,
+                time_to_expiry=time_to_expiry,
+                volatility=volatility,
+            )
+            
+            # Calculate expected value
+            expected_value = (probability_of_profit * spread.max_profit) - (
+                (1 - probability_of_profit) * spread.max_risk
+            )
+            
+            # Calculate ranking score
+            ranking_score = self._calculate_ranking_score(
+                probability_of_profit,
+                spread.risk_reward_ratio,
+                expected_value
+            )
+            
+            # Create recommendation
+            recommendation = SpreadRecommendation(
+                long_strike=spread.long_strike,
+                short_strike=spread.short_strike,
+                long_premium=spread.long_mid,
+                short_premium=spread.short_mid,
+                net_debit=spread.net_debit,
+                max_risk=spread.max_risk,
+                max_profit=spread.max_profit,
+                risk_reward_ratio=spread.risk_reward_ratio,
+                probability_of_profit=probability_of_profit,
+                breakeven_price=spread.breakeven,
+                long_bid=spread.long_bid,
+                long_ask=spread.long_ask,
+                short_bid=spread.short_bid,
+                short_ask=spread.short_ask,
+                long_volume=spread.long_volume,
+                short_volume=spread.short_volume,
+                expected_value=expected_value,
+                sentiment_score=self._current_sentiment_score,
+                ranking_score=ranking_score,
+                timestamp=datetime.now(),
+                contracts_to_trade=position_info['contracts'],
+                total_cost=position_info['total_cost'],
+                buying_power_used_pct=position_info['risk_pct']
+            )
+            
+            recommendations.append(recommendation)
+            
+        return recommendations
+    
+    def _rank_recommendations(
+        self, recommendations: list[SpreadRecommendation]
+    ) -> list[SpreadRecommendation]:
+        """
+        Rank spread recommendations by their ranking score.
+        
+        Args:
+            recommendations: List of spread recommendations
+            
+        Returns:
+            List sorted by ranking score (highest first)
         """
         return sorted(recommendations, key=lambda x: x.ranking_score, reverse=True)
 
