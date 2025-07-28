@@ -75,7 +75,10 @@
       "Bash(cd:*)",
       "Bash(cd:*)",
       "Bash(cd:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(./stop.sh)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh issue:*)"
     ],
     "deny": []
   }
