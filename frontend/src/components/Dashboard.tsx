@@ -4,6 +4,7 @@ import MarketStatusBar from './MarketStatusBar'
 import SentimentPanel from './SentimentPanel'
 import RecommendedSpreadsPanel from './RecommendedSpreadsPanel'
 import LivePLMonitorPanel from './LivePLMonitorPanel'
+import { TradeManagementPanel } from './TradeManagementPanel'
 import { apiClient } from '../api/client'
 
 interface MarketData {
@@ -60,6 +61,7 @@ interface HistoricalData {
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'trades'>('dashboard')
   
   const [marketData, setMarketData] = useState<MarketData>({
     spyPrice: 0,
@@ -259,31 +261,71 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white font-mono">
       <div className="container mx-auto p-4 max-w-7xl">
-        {/* Market Status Bar */}
+        {/* Market Status Bar - Always visible */}
         <MarketStatusBar marketData={marketData} />
         
-        {/* Main Dashboard Grid */}
-        <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-6" 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.5 }}
-        >
-          {/* Sentiment Panel - Takes full width on mobile, spans 2 columns on xl */}
-          <div className="xl:col-span-2">
-            <SentimentPanel sentimentData={sentimentData} />
-          </div>
-          
-          {/* Live P/L Monitor */}
-          <div className="lg:col-span-1">
-            <LivePLMonitorPanel plData={plData} historicalData={historicalData} />
-          </div>
-          
-          {/* Recommended Spreads - Full width on smaller screens */}
-          <div className="lg:col-span-2 xl:col-span-3">
-            <RecommendedSpreadsPanel recommendations={spreadRecommendations} />
-          </div>
-        </motion.div>
+        {/* Tab Navigation */}
+        <div className="mt-4 border-b border-slate-700">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'dashboard'
+                  ? 'border-blue-500 text-blue-400'
+                  : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-600'
+              }`}
+            >
+              Live Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('trades')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'trades'
+                  ? 'border-blue-500 text-blue-400'
+                  : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-600'
+              }`}
+            >
+              Trade Management
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div className="mt-6">
+          {activeTab === 'dashboard' ? (
+            /* Main Dashboard Grid */
+            <motion.div 
+              className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.5 }}
+            >
+              {/* Sentiment Panel - Takes full width on mobile, spans 2 columns on xl */}
+              <div className="xl:col-span-2">
+                <SentimentPanel sentimentData={sentimentData} />
+              </div>
+              
+              {/* Live P/L Monitor */}
+              <div className="lg:col-span-1">
+                <LivePLMonitorPanel plData={plData} historicalData={historicalData} />
+              </div>
+              
+              {/* Recommended Spreads - Full width on smaller screens */}
+              <div className="lg:col-span-2 xl:col-span-3">
+                <RecommendedSpreadsPanel recommendations={spreadRecommendations} />
+              </div>
+            </motion.div>
+          ) : (
+            /* Trade Management Panel */
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.5 }}
+            >
+              <TradeManagementPanel />
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   )
