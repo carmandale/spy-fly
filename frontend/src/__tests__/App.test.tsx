@@ -1,26 +1,47 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import App from '../App'
 
-// Mock the API client
+// Mock the API client with methods that match the actual implementation
 vi.mock('../api/client', () => ({
   apiClient: {
-    getHealth: vi.fn().mockResolvedValue({ status: 'healthy' }),
+    baseURL: 'http://localhost:8001',
+    health: vi.fn().mockResolvedValue({ status: 'healthy' }),
     getQuote: vi.fn().mockResolvedValue({
-      symbol: 'SPY',
+      ticker: 'SPY',
       price: 580.50,
-      change: 2.35,
-      changePercent: 0.41
+      change_percent: 0.5,
+      bid: 580.45,
+      ask: 580.55,
+      volume: 1000000,
+      timestamp: new Date().toISOString(),
+      cached: false
     }),
-    getSentiment: vi.fn().mockResolvedValue({
-      score: 75,
-      decision: 'PROCEED',
-      components: {
-        vix: { score: 70, value: 18.5 },
-        futures: { score: 80, value: 0.25 }
-      }
+    getOptions: vi.fn().mockResolvedValue({
+      ticker: 'SPY',
+      underlying_price: 580.50,
+      expiration: new Date().toISOString().split('T')[0],
+      options: [{
+        symbol: 'SPY250101C00580000',
+        type: 'call',
+        strike: 580,
+        expiration_date: new Date().toISOString().split('T')[0],
+        bid: 2.50,
+        ask: 2.55,
+        mid: 2.525,
+        volume: 100,
+        open_interest: 500
+      }],
+      cached: false,
+      timestamp: new Date().toISOString()
     }),
-    getOptions: vi.fn().mockResolvedValue([])
+    getMarketStatus: vi.fn().mockResolvedValue({
+      market_status: 'open',
+      session: 'regular',
+      api_status: 'connected',
+      rate_limit_remaining: 5000,
+      rate_limit_reset: new Date().toISOString()
+    })
   }
 }))
 
@@ -29,22 +50,31 @@ describe('App', () => {
     vi.clearAllMocks()
   })
 
-  it('renders without crashing', () => {
-    render(<App />)
-    expect(screen.getByText('Loading dashboard...')).toBeInTheDocument()
+  it('renders without crashing', async () => {
+    await act(async () => {
+      render(<App />)
+    })
+    
+    // Should render dashboard container
+    const dashboardContainer = document.querySelector('.min-h-screen')
+    expect(dashboardContainer).toBeTruthy()
   })
 
   it('displays dashboard components after loading', async () => {
-    render(<App />)
+    await act(async () => {
+      render(<App />)
+    })
     
-    // Wait for the dashboard to load
+    // Wait for the dashboard to load and API calls to complete
     await waitFor(() => {
-      expect(screen.queryByText('Loading dashboard...')).not.toBeInTheDocument()
-    }, { timeout: 2000 })
-
-    // Should show the market status bar
+      // Look for SPY price display in the market status bar
+      const spyText = screen.getByText(/SPY:/)
+      expect(spyText).toBeInTheDocument()
+    }, { timeout: 3000 })
+    
+    // Should show the price value
     await waitFor(() => {
-      expect(screen.getByText('SPY')).toBeInTheDocument()
+      expect(screen.getByText('$580.50')).toBeInTheDocument()
     })
   })
 })
