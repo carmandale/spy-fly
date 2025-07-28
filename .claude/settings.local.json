@@ -61,7 +61,12 @@
       "Bash(gh issue list:*)",
       "Bash(npm test)",
       "Bash(uv pip install:*)",
-      "Bash(./start.sh:*)"
+      "Bash(./start.sh:*)",
+      "Bash(uv add:*)",
+      "Bash(uv pip:*)",
+      "Bash(uvicorn:*)",
+      "Bash(npm test:*)",
+      "Bash(/usr/bin/python3:*)"
     ],
     "deny": []
   }

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Plus } from 'lucide-react'
 import MarketStatusBar from './MarketStatusBar'
 import SentimentPanel from './SentimentPanel'
 import RecommendedSpreadsPanel from './RecommendedSpreadsPanel'
 import LivePLMonitorPanel from './LivePLMonitorPanel'
+import TradeInputModal from './TradeInputModal'
+import TradeHistoryTable from './TradeHistoryTable'
 import { apiClient } from '../api/client'
 
 interface MarketData {
@@ -60,6 +63,8 @@ interface HistoricalData {
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showTradeModal, setShowTradeModal] = useState(false)
+  const [tradeRefreshTrigger, setTradeRefreshTrigger] = useState(0)
   
   const [marketData, setMarketData] = useState<MarketData>({
     spyPrice: 0,
@@ -256,11 +261,26 @@ const Dashboard: React.FC = () => {
     )
   }
 
+  const handleTradeCreated = () => {
+    setTradeRefreshTrigger(prev => prev + 1)
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white font-mono">
       <div className="container mx-auto p-4 max-w-7xl">
-        {/* Market Status Bar */}
-        <MarketStatusBar marketData={marketData} />
+        {/* Header with Trade Button */}
+        <div className="mb-4 space-y-4">
+          <div className="flex items-center justify-end">
+            <button
+              onClick={() => setShowTradeModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+              Record Trade
+            </button>
+          </div>
+          <MarketStatusBar marketData={marketData} />
+        </div>
         
         {/* Main Dashboard Grid */}
         <motion.div 
@@ -283,7 +303,19 @@ const Dashboard: React.FC = () => {
           <div className="lg:col-span-2 xl:col-span-3">
             <RecommendedSpreadsPanel recommendations={spreadRecommendations} />
           </div>
+          
+          {/* Trade History - Full width */}
+          <div className="lg:col-span-2 xl:col-span-3">
+            <TradeHistoryTable refreshTrigger={tradeRefreshTrigger} />
+          </div>
         </motion.div>
+        
+        {/* Trade Input Modal */}
+        <TradeInputModal 
+          isOpen={showTradeModal}
+          onClose={() => setShowTradeModal(false)}
+          onTradeCreated={handleTradeCreated}
+        />
       </div>
     </div>
   )
