@@ -17,15 +17,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 	- [x] 1.7 Add tests for order ticket text generation with proper formatting
 	- [x] 1.8 Verify all tests pass and order tickets generate correctly
 
-- [ ] 2. Copy-to-Clipboard Functionality
-	- [ ] 2.1 Write tests for CopyButton component with success/error states
-	- [ ] 2.2 Implement CopyButton React component with modern Clipboard API
-	- [ ] 2.3 Write tests for clipboard fallback mechanisms (execCommand, text selection)
-	- [ ] 2.4 Implement clipboard permission handling and user guidance
-	- [ ] 2.5 Write tests for toast notifications and visual feedback
-	- [ ] 2.6 Add cross-browser compatibility tests for clipboard operations
-	- [ ] 2.7 Implement proper error handling for clipboard failures
-	- [ ] 2.8 Verify all tests pass and clipboard works across browsers
+- [x] 2. Copy-to-Clipboard Functionality
+	- [x] 2.1 Write tests for CopyButton component with success/error states
+	- [x] 2.2 Implement CopyButton React component with modern Clipboard API
+	- [x] 2.3 Write tests for clipboard fallback mechanisms (execCommand, text selection)
+	- [x] 2.4 Implement clipboard permission handling and user guidance
+	- [x] 2.5 Write tests for toast notifications and visual feedback
+	- [x] 2.6 Add cross-browser compatibility tests for clipboard operations
+	- [x] 2.7 Implement proper error handling for clipboard failures
+	- [x] 2.8 Verify all tests pass and clipboard works across browsers
 
 - [ ] 3. Trade Execution Workflow UI Components
 	- [ ] 3.1 Write tests for ExecutionWizard component with step navigation
