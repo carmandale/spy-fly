@@ -7,15 +7,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ## Tasks
 
-- [ ] 1. Order Ticket Generation System
-	- [ ] 1.1 Write tests for OrderTicket data model with broker format validation
-	- [ ] 1.2 Implement OrderTicket Pydantic model with all required fields
-	- [ ] 1.3 Write tests for BrokerFormatAdapter with multiple broker templates
-	- [ ] 1.4 Implement BrokerFormatAdapter supporting Interactive Brokers, TD Ameritrade, E*TRADE formats
-	- [ ] 1.5 Write tests for OrderFormatter service with edge cases and validation
-	- [ ] 1.6 Implement OrderFormatter service integrating with existing spread recommendations
-	- [ ] 1.7 Add tests for order ticket text generation with proper formatting
-	- [ ] 1.8 Verify all tests pass and order tickets generate correctly
+- [x] 1. Order Ticket Generation System
+	- [x] 1.1 Write tests for OrderTicket data model with broker format validation
+	- [x] 1.2 Implement OrderTicket Pydantic model with all required fields
+	- [x] 1.3 Write tests for BrokerFormatAdapter with multiple broker templates
+	- [x] 1.4 Implement BrokerFormatAdapter supporting Interactive Brokers, TD Ameritrade, E*TRADE formats
+	- [x] 1.5 Write tests for OrderFormatter service with edge cases and validation
+	- [x] 1.6 Implement OrderFormatter service integrating with existing spread recommendations
+	- [x] 1.7 Add tests for order ticket text generation with proper formatting
+	- [x] 1.8 Verify all tests pass and order tickets generate correctly
 
 - [ ] 2. Copy-to-Clipboard Functionality
 	- [ ] 2.1 Write tests for CopyButton component with success/error states
