@@ -1,0 +1,147 @@
+---
+description: API integration patterns and data flow between backend and frontend
+---
+
+# API Integration Patterns
+
+## Backend API Structure
+
+### Endpoint Organization
+- Base URL: `/api/v1/`
+- Endpoints grouped by domain in [endpoints/](mdc:backend/app/api/v1/endpoints/)
+- Route registration in [api.py](mdc:backend/app/api/v1/api.py)
+
+### Key API Endpoints
+- `GET /health` - System health check
+- `GET /market/spy/price` - Current SPY price
+- `GET /market/vix` - VIX volatility data
+- `GET /sentiment/score` - Market sentiment analysis
+- `POST /spreads/recommendations` - Get spread recommendations
+- `GET /trades/history` - Trade history
+
+### Request/Response Patterns
+```python
+# Standard endpoint structure
+@router.get("/endpoint", response_model=ResponseSchema)
+async def endpoint_handler(
+    request: RequestSchema,
+    db: Session = Depends(get_db)
+) -> ResponseSchema:
+    try:
+        # Process request
+        result = await service.process(request)
+        return ResponseSchema(**result)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+```
+
+### Error Handling
+- Use FastAPI HTTPException for API errors
+- Consistent error response format
+- Proper HTTP status codes (400, 404, 500)
+- Log errors for debugging
+
+## Frontend API Integration
+
+### API Client Structure
+- Centralized client in [client.ts](mdc:frontend/src/api/client.ts)
+- TypeScript interfaces for all API responses
+- Error handling with try/catch blocks
+- Loading state management
+
+### API Call Patterns
+```typescript
+// Standard API call structure
+export const fetchData = async (): Promise<DataType> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/endpoint`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+```
+
+### State Management
+- Use React hooks for API state
+- Handle loading, success, and error states
+- Update UI based on API responses
+- Cache responses when appropriate
+
+## Data Flow Architecture
+
+### Spread Recommendation Flow
+1. Frontend requests recommendations via API
+2. Backend calls [SpreadSelectionService](mdc:backend/app/services/spread_selection_service.py)
+3. Service generates spreads using market data
+4. [RankingEngine](mdc:backend/app/services/ranking_engine.py) ranks spreads
+5. [TradeFormatter](mdc:backend/app/services/trade_formatter.py) formats output
+6. API returns JSON to frontend
+7. Frontend displays in [RecommendedSpreadsPanel](mdc:frontend/src/components/RecommendedSpreadsPanel.tsx)
+
+### Real-time Data Updates
+- WebSocket connections for live market data
+- Polling for periodic updates (sentiment, VIX)
+- Optimistic UI updates for better UX
+- Error recovery and reconnection logic
+
+## Data Format Compatibility
+
+### Backend Output Format
+```json
+{
+  "recommendations": [
+    {
+      "id": "string",
+      "strategy_type": "bull_call_spread",
+      "long_strike": 450.0,
+      "short_strike": 455.0,
+      "probability": 0.65,
+      "max_profit": 325.0,
+      "max_risk": 175.0
+    }
+  ]
+}
+```
+
+### Frontend Expected Format
+```typescript
+interface SpreadRecommendation {
+  id: string;
+  longStrike: number;
+  shortStrike: number;
+  probability: number; // as percentage (65, not 0.65)
+  maxProfit: number;
+  maxRisk: number;
+}
+```
+
+### Format Transformation
+- API adapter needed to transform snake_case to camelCase
+- Convert decimal probability to percentage
+- Handle optional fields gracefully
+- Validate data types match TypeScript interfaces
+
+## Performance Considerations
+
+### Caching Strategy
+- Cache market data for 1-minute intervals
+- Cache VIX data for 5-minute intervals
+- Use Redis for distributed caching
+- Implement cache invalidation logic
+
+### Rate Limiting
+- Polygon API: 5 requests per minute (free tier)
+- Internal rate limiting with [rate_limiter.py](mdc:backend/app/services/rate_limiter.py)
+- Queue requests during high traffic
+- Graceful degradation when limits exceeded
+
+### Response Optimization
+- Paginate large result sets
+- Compress responses with gzip
+- Minimize payload size
+- Use HTTP 304 for unchanged data

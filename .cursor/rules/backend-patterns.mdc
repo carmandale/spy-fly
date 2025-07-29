@@ -1,0 +1,47 @@
+---
+globs: backend/**/*.py
+---
+
+# Backend Development Patterns
+
+## FastAPI Service Architecture
+
+### Service Layer Pattern
+- All business logic goes in [services/](mdc:backend/app/services/) directory
+- Services are stateless classes with clear single responsibilities
+- Use dependency injection for database sessions and external clients
+- Example: [spread_selection_service.py](mdc:backend/app/services/spread_selection_service.py)
+
+### API Endpoint Structure
+- Endpoints in [endpoints/](mdc:backend/app/api/v1/endpoints/) follow REST conventions
+- Use Pydantic schemas for request/response validation
+- Handle errors with custom exceptions from [exceptions.py](mdc:backend/app/core/exceptions.py)
+- Example: [market.py](mdc:backend/app/api/v1/endpoints/market.py)
+
+### Database Patterns
+- Use SQLAlchemy ORM with models in [db_models.py](mdc:backend/app/models/db_models.py)
+- Database sessions managed through [deps.py](mdc:backend/app/api/deps.py)
+- Alembic migrations in [alembic/versions/](mdc:backend/alembic/versions/)
+
+### Testing Patterns
+- Unit tests in [tests/unit/](mdc:backend/tests/unit/) test individual components
+- Integration tests in [tests/integration/](mdc:backend/tests/integration/) test full workflows
+- Use [conftest.py](mdc:backend/tests/conftest.py) for test fixtures and database setup
+- Mock external APIs (Polygon) in tests
+
+### Code Style
+- Use type hints for all function parameters and return values
+- Follow PEP 8 naming conventions (snake_case)
+- Use dataclasses or Pydantic models for structured data
+- Add docstrings for all public methods and classes
+
+### Error Handling
+- Use structured exceptions with clear error messages
+- Log errors with appropriate levels (DEBUG, INFO, WARNING, ERROR)
+- Return meaningful HTTP status codes and error responses
+- Handle rate limiting and API failures gracefully
+
+### Configuration
+- Environment variables defined in [config.py](mdc:backend/app/config.py)
+- Use Pydantic BaseSettings for configuration validation
+- Separate settings for development, testing, and production

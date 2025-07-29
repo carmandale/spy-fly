@@ -13,6 +13,7 @@ from app.models.spread import SpreadRecommendation
 from app.services.black_scholes_calculator import BlackScholesCalculator
 from app.services.market_service import MarketDataService
 from app.services.options_chain_processor import OptionsChainProcessor
+from app.services.ranking_engine import RankingEngine
 from app.services.risk_validator import RiskValidator
 from app.services.sentiment_calculator import SentimentCalculator
 from app.services.spread_generator import SpreadGenerator
@@ -58,6 +59,7 @@ class SpreadSelectionService:
         options_processor: OptionsChainProcessor | None = None,
         spread_generator: SpreadGenerator | None = None,
         risk_validator: RiskValidator | None = None,
+        ranking_engine: RankingEngine | None = None,
     ):
         """
         Initialize the spread selection service with dependencies.
@@ -83,6 +85,7 @@ class SpreadSelectionService:
             max_buying_power_pct=self.config.max_buying_power_pct,
             min_risk_reward_ratio=self.config.min_risk_reward_ratio,
         )
+        self.ranking_engine = ranking_engine or RankingEngine()
 
         # Internal state
         self._current_sentiment_score: float | None = None
@@ -162,8 +165,8 @@ class SpreadSelectionService:
             if rec.probability_of_profit >= self.config.min_probability_of_profit
         ]
 
-        # Step 8: Rank and return top recommendations
-        ranked_recommendations = self._rank_recommendations(valid_recommendations)
+        # Step 8: Rank and return top recommendations using RankingEngine
+        ranked_recommendations = self.ranking_engine.rank_recommendations(valid_recommendations)
         return ranked_recommendations[:max_recommendations]
 
     async def _update_market_context(self) -> None:
