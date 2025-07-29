@@ -82,7 +82,8 @@
       "Bash(uv pip:*)",
       "Bash(PYTHONPATH=/Users/dalecarman/Groove Jones Dropbox/Dale Carman/Projects/dev/spy-fly/backend python3 -m pytest tests/unit/test_ranking_engine.py -v)",
       "Bash(npm test:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(bash:*)"
     ],
     "deny": []
   }
