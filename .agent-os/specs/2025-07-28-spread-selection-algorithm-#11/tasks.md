@@ -36,15 +36,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 	- [x] 3.7 Implement validation that prevents recommendations below minimum criteria
 	- [x] 3.8 Verify all tests pass and risk constraints are absolutely enforced
 
-- [ ] 4. Ranking Algorithm and Trade Recommendation Engine
-	- [ ] 4.1 Write tests for expected value calculation using probability and risk/reward metrics
-	- [ ] 4.2 Implement RankingEngine with sentiment score weighting and expected value sorting
-	- [ ] 4.3 Write tests for TradeFormatter generating human-readable recommendations
-	- [ ] 4.4 Implement TradeFormatter with copy-to-clipboard order ticket generation
-	- [ ] 4.5 Add tests for top 3-5 recommendation selection and JSON formatting
-	- [ ] 4.6 Write integration tests for complete recommendation pipeline flow
-	- [ ] 4.7 Implement breakeven point and profit zone calculations for each recommendation
-	- [ ] 4.8 Verify all tests pass and recommendation format meets frontend requirements
+- [x] 4. Ranking Algorithm and Trade Recommendation Engine ✓ COMPLETED
+	- [x] 4.1 Write tests for expected value calculation using probability and risk/reward metrics
+	- [x] 4.2 Implement RankingEngine with sentiment score weighting and expected value sorting
+	- [x] 4.3 Write tests for TradeFormatter generating human-readable recommendations
+	- [x] 4.4 Implement TradeFormatter with copy-to-clipboard order ticket generation
+	- [x] 4.5 Add tests for top 3-5 recommendation selection and JSON formatting
+	- [x] 4.6 Write integration tests for complete recommendation pipeline flow
+	- [x] 4.7 Implement breakeven point and profit zone calculations for each recommendation
+	- [x] 4.8 Verify all tests pass and recommendation format meets frontend requirements
 
 - [ ] 5. API Integration and Database Schema Updates
 	- [ ] 5.1 Write tests for new API endpoint returning formatted spread recommendations

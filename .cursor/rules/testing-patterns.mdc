@@ -1,0 +1,103 @@
+---
+globs: **/test*.py,**/test*.ts,**/test*.tsx,**/*.spec.ts,**/*.test.ts
+---
+
+# Testing Patterns and Standards
+
+## Backend Testing Strategy
+
+### Test Organization
+- **Unit Tests**: [tests/unit/](mdc:backend/tests/unit/) - Test individual components in isolation
+- **Integration Tests**: [tests/integration/](mdc:backend/tests/integration/) - Test component interactions
+- **Performance Tests**: [tests/performance/](mdc:backend/tests/performance/) - Test response times and throughput
+
+### Test Structure
+```python
+# Standard test structure
+def test_function_name_should_expected_behavior():
+    # Arrange - Set up test data
+    # Act - Execute the code under test
+    # Assert - Verify the results
+```
+
+### Testing Tools
+- **pytest**: Test runner and framework
+- **unittest.mock**: Mock external dependencies
+- **pytest-asyncio**: Test async functions
+- **Factory Boy**: Generate test data
+- Example: [conftest.py](mdc:backend/tests/conftest.py)
+
+### Mocking Patterns
+- Mock external APIs (Polygon, market data)
+- Mock database calls for unit tests
+- Use dependency injection for testable code
+- Example: Mocking in [test_polygon_client.py](mdc:backend/tests/unit/test_polygon_client.py)
+
+### Test Data Management
+- Use fixtures for reusable test data
+- Separate test database for integration tests
+- Clean up database state between tests
+- Example: Database fixtures in [conftest.py](mdc:backend/tests/conftest.py)
+
+## Frontend Testing Strategy
+
+### Test Organization
+- **Component Tests**: [__tests__/](mdc:frontend/src/__tests__/) - Test React components
+- **API Tests**: Test API integration and error handling
+- **E2E Tests**: [e2e/](mdc:frontend/e2e/) - Test complete user workflows
+
+### Testing Tools
+- **Vitest**: Fast test runner for Vite projects
+- **React Testing Library**: Component testing utilities
+- **Playwright**: End-to-end testing framework
+- **MSW**: Mock Service Worker for API mocking
+
+### Component Testing Patterns
+```typescript
+// Standard component test structure
+describe('ComponentName', () => {
+  it('should render expected content', () => {
+    // Arrange - Set up props and state
+    // Act - Render the component
+    // Assert - Check DOM output
+  });
+});
+```
+
+### API Testing
+- Mock API responses with MSW
+- Test loading states and error conditions
+- Verify correct API calls are made
+- Example: [client.test.ts](mdc:frontend/src/__tests__/api/client.test.ts)
+
+### E2E Testing
+- Test complete user workflows
+- Verify dashboard functionality
+- Test responsive design
+- Example: [dashboard.spec.ts](mdc:frontend/e2e/dashboard.spec.ts)
+
+## Test Quality Standards
+
+### Coverage Requirements
+- Minimum 80% code coverage for services
+- 100% coverage for critical trading logic
+- All public methods must have tests
+- Edge cases and error conditions covered
+
+### Test Data Patterns
+- Use realistic trading data in tests
+- Test with various market conditions
+- Include edge cases (market closed, no data)
+- Validate financial calculations precisely
+
+### Performance Testing
+- API response time < 200ms
+- Database queries optimized
+- Frontend render performance
+- Load testing for concurrent users
+
+### Test Maintenance
+- Update tests when requirements change
+- Remove obsolete tests
+- Keep test data current with market conditions
+- Regular test suite execution in CI/CD

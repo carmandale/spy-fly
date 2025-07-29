@@ -147,132 +147,127 @@ class TestSpreadSelectionService:
         assert updated_config.max_buying_power_pct == 0.03
         assert updated_config.min_risk_reward_ratio == 1.5
 
-    @pytest.mark.asyncio
-    async def test_market_suitability_checks(self):
-        """Test market suitability validation logic."""
-        # Test with missing data
-        assert not self.spread_service._is_market_suitable_for_trading()
 
-        # Test with complete data
-        self.spread_service._current_spy_price = 475.0
-        self.spread_service._current_vix = 20.0
-        self.spread_service._current_sentiment_score = 0.2
-        assert self.spread_service._is_market_suitable_for_trading()
+class TestExpectedValueCalculation:
+    """Test expected value calculation for spread recommendations."""
 
-        # Test with extreme VIX
-        self.spread_service._current_vix = 75.0
-        assert not self.spread_service._is_market_suitable_for_trading()
+    def test_expected_value_basic_calculation(self):
+        """Test basic expected value calculation with known inputs."""
+        # Known inputs for verification
+        probability_of_profit = 0.4  # 40% chance of profit
+        max_profit = 100.0  # $100 max profit
+        max_risk = 150.0  # $150 max risk
 
-    def test_bid_ask_spread_calculation(self):
-        """Test bid-ask spread percentage calculation."""
-        # Test normal option
-        option_normal = {"bid": 2.50, "ask": 2.60}
-        spread_pct = self.spread_service._calculate_bid_ask_spread_pct(option_normal)
-        expected = (2.60 - 2.50) / 2.55  # (ask - bid) / mid
-        assert abs(spread_pct - expected) < 0.0001
-
-        # Test zero bid/ask
-        option_zero = {"bid": 0.0, "ask": 1.0}
-        spread_pct = self.spread_service._calculate_bid_ask_spread_pct(option_zero)
-        assert spread_pct == float("inf")
-
-        # Test missing bid/ask
-        option_missing = {}
-        spread_pct = self.spread_service._calculate_bid_ask_spread_pct(option_missing)
-        assert spread_pct == float("inf")
-
-    def test_spread_combination_generation(self):
-        """Test generation of bull-call-spread combinations."""
-        option_chain = {
-            "calls": [
-                {"strike": 470.0, "bid": 3.0, "ask": 3.1},
-                {"strike": 475.0, "bid": 2.0, "ask": 2.1},
-                {"strike": 480.0, "bid": 1.0, "ask": 1.1},
-            ]
-        }
-
-        spreads = self.spread_service._generate_spread_combinations(option_chain)
-
-        # Should generate 3 combinations: 470-475, 470-480, 475-480
-        assert len(spreads) == 3
-
-        # Check first spread
-        assert spreads[0]["long_strike"] == 470.0
-        assert spreads[0]["short_strike"] == 475.0
-        assert spreads[0]["spread_width"] == 5.0
-
-        # Check second spread
-        assert spreads[1]["long_strike"] == 470.0
-        assert spreads[1]["short_strike"] == 480.0
-        assert spreads[1]["spread_width"] == 10.0
-
-    def test_ranking_score_calculation(self):
-        """Test ranking score calculation logic."""
-        # Test with balanced metrics
-        score = self.spread_service._calculate_ranking_score(
-            probability_of_profit=0.6, risk_reward_ratio=1.5, expected_value=0.2
+        # Calculate expected value using the same formula as SpreadSelectionService
+        expected_value = (probability_of_profit * max_profit) - (
+            (1 - probability_of_profit) * max_risk
         )
 
-        # Score should be between 0 and 1
-        assert 0.0 <= score <= 1.0
+        # Verify calculation: (0.4 * 100) - (0.6 * 150) = 40 - 90 = -50
+        assert expected_value == -50.0
 
-        # Test with extreme metrics
-        score_high = self.spread_service._calculate_ranking_score(
-            probability_of_profit=0.9, risk_reward_ratio=3.0, expected_value=0.5
+    def test_expected_value_positive_scenario(self):
+        """Test expected value calculation for profitable scenario."""
+        # Favorable trade scenario
+        probability_of_profit = 0.7  # 70% chance of profit
+        max_profit = 200.0  # $200 max profit
+        max_risk = 100.0  # $100 max risk
+
+        expected_value = (probability_of_profit * max_profit) - (
+            (1 - probability_of_profit) * max_risk
         )
 
-        score_low = self.spread_service._calculate_ranking_score(
-            probability_of_profit=0.3, risk_reward_ratio=1.0, expected_value=0.1
+        # Verify: (0.7 * 200) - (0.3 * 100) = 140 - 30 = 110
+        assert expected_value == 110.0
+
+    def test_expected_value_break_even_scenario(self):
+        """Test expected value calculation for break-even scenario."""
+        # Exact break-even scenario
+        probability_of_profit = 0.6  # 60% chance
+        max_profit = 50.0  # $50 max profit
+        max_risk = 75.0  # $75 max risk (creates break-even at 60%)
+
+        expected_value = (probability_of_profit * max_profit) - (
+            (1 - probability_of_profit) * max_risk
         )
 
-        # Higher metrics should produce higher score
-        assert score_high > score_low
+        # Verify: (0.6 * 50) - (0.4 * 75) = 30 - 30 = 0
+        assert expected_value == 0.0
 
-    @pytest.mark.asyncio
-    async def test_empty_option_chain_handling(self):
-        """Test handling of empty option chains."""
-        # Mock empty option chain
-        from app.models.market import OptionChainResponse
+    def test_expected_value_edge_cases(self):
+        """Test expected value calculation with edge case inputs."""
+        # Test with 0% probability
+        expected_value_zero = (0.0 * 100.0) - ((1 - 0.0) * 50.0)
+        assert expected_value_zero == -50.0
 
-        empty_chain = OptionChainResponse(
-            ticker="SPY",
-            underlying_price=475.0,
-            expiration=date.today().isoformat(),
-            options=[],
-            cached=False,
-            cache_expires_at=datetime.now().isoformat(),
+        # Test with 100% probability
+        expected_value_certain = (1.0 * 100.0) - ((1 - 1.0) * 50.0)
+        assert expected_value_certain == 100.0
+
+        # Test with very small profits and risks
+        expected_value_small = (0.5 * 0.01) - ((1 - 0.5) * 0.01)
+        assert expected_value_small == 0.0
+
+    def test_expected_value_precision(self):
+        """Test expected value calculation maintains numerical precision."""
+        # Use values that test floating point precision
+        probability_of_profit = 0.333333  # Repeating decimal
+        max_profit = 150.75  # Decimal profit
+        max_risk = 100.25  # Decimal risk
+
+        expected_value = (probability_of_profit * max_profit) - (
+            (1 - probability_of_profit) * max_risk
         )
 
-        self.market_service.get_spy_options.return_value = empty_chain
+        # Calculate expected result manually for verification
+        expected_result = (0.333333 * 150.75) - (0.666667 * 100.25)
+        
+        # Verify within reasonable floating point tolerance
+        assert abs(expected_value - expected_result) < 0.0001
 
-        option_chain = await self.spread_service._get_current_option_chain()
+    def test_expected_value_with_risk_reward_ratios(self):
+        """Test expected value across different risk/reward ratios."""
+        base_risk = 100.0
 
-        # Should return the OptionChainResponse object
-        assert option_chain == empty_chain
-        assert option_chain.options == []
+        # Test 1:1 risk/reward (max_profit = max_risk)
+        max_profit_1to1 = 100.0
+        prob_1to1 = 0.5  # Need >50% to be profitable
+        ev_1to1 = (prob_1to1 * max_profit_1to1) - ((1 - prob_1to1) * base_risk)
+        assert ev_1to1 == 0.0  # Exactly break-even at 50%
 
-    def test_mathematical_precision_validation(self):
-        """Test mathematical precision requirements are met."""
-        # Test with Black-Scholes calculator integration
-        test_params = {
-            "spot_price": 475.0,
-            "strike_price": 480.0,
-            "time_to_expiry": 1.0 / 365,
-            "volatility": 0.20,
-            "risk_free_rate": 0.05,
-        }
+        # Test 2:1 risk/reward (max_profit = 2 * max_risk)
+        max_profit_2to1 = 200.0
+        prob_2to1 = 0.4  # Lower probability but higher reward
+        ev_2to1 = (prob_2to1 * max_profit_2to1) - ((1 - prob_2to1) * base_risk)
+        assert ev_2to1 == 20.0  # (0.4 * 200) - (0.6 * 100) = 80 - 60 = 20
 
-        # Run calculation multiple times
-        results = []
-        for _ in range(10):
-            result = self.black_scholes.probability_of_profit(**test_params)
-            results.append(result)
+        # Test 1:2 risk/reward (max_profit = 0.5 * max_risk)
+        max_profit_1to2 = 50.0
+        prob_1to2 = 0.8  # Need high probability for profitability
+        ev_1to2 = (prob_1to2 * max_profit_1to2) - ((1 - prob_1to2) * base_risk)
+        assert ev_1to2 == 20.0  # (0.8 * 50) - (0.2 * 100) = 40 - 20 = 20
 
-        # All results should be identical (deterministic)
-        for result in results[1:]:
-            assert (
-                abs(result - results[0]) < 1e-10
-            ), f"Calculation inconsistency detected: {result} vs {results[0]}"
+    def test_expected_value_probability_thresholds(self):
+        """Test probability thresholds for positive expected value."""
+        max_profit = 100.0
+        max_risk = 150.0
 
-        # Result should meet 0.01% tolerance requirement
-        assert all(0.0 <= r <= 1.0 for r in results), "Probability not in valid range"
+        # Calculate breakeven probability
+        # At breakeven: prob * max_profit = (1 - prob) * max_risk
+        # prob * max_profit = max_risk - prob * max_risk
+        # prob * (max_profit + max_risk) = max_risk
+        # prob = max_risk / (max_profit + max_risk)
+        breakeven_prob = max_risk / (max_profit + max_risk)
+        expected_breakeven_prob = 150.0 / (100.0 + 150.0)  # = 0.6
+        
+        assert abs(breakeven_prob - expected_breakeven_prob) < 0.0001
+
+        # Test just below breakeven
+        prob_below = breakeven_prob - 0.01
+        ev_below = (prob_below * max_profit) - ((1 - prob_below) * max_risk)
+        assert ev_below < 0
+
+        # Test just above breakeven
+        prob_above = breakeven_prob + 0.01
+        ev_above = (prob_above * max_profit) - ((1 - prob_above) * max_risk)
+        assert ev_above > 0

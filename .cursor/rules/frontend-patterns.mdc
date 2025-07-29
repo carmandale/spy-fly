@@ -1,0 +1,70 @@
+---
+globs: frontend/**/*.ts,frontend/**/*.tsx
+---
+
+# Frontend Development Patterns
+
+## React TypeScript Architecture
+
+### Component Structure
+- Use functional components with TypeScript interfaces
+- Components in [components/](mdc:frontend/src/components/) directory
+- Each component should have a single responsibility
+- Example: [Dashboard.tsx](mdc:frontend/src/components/Dashboard.tsx)
+
+### TypeScript Interfaces
+- Define interfaces for all props and data structures
+- Use strict typing with no `any` types
+- Example interfaces for trading data:
+  ```typescript
+  interface SpreadRecommendation {
+    id: string;
+    longStrike: number;
+    shortStrike: number;
+    probability: number;
+    maxProfit: number;
+    maxRisk: number;
+  }
+  ```
+
+### State Management
+- Use React hooks (useState, useEffect) for local state
+- Manage API calls with custom hooks
+- Handle loading states and error conditions
+- Example: Data fetching in [Dashboard.tsx](mdc:frontend/src/components/Dashboard.tsx)
+
+### API Integration
+- Centralized API client in [client.ts](mdc:frontend/src/api/client.ts)
+- Use async/await for API calls
+- Handle errors with try/catch blocks
+- Type API responses with TypeScript interfaces
+
+### Styling Patterns
+- Use Tailwind CSS for utility-first styling
+- Consistent spacing and color schemes
+- Responsive design with mobile-first approach
+- Component-specific styles when needed
+
+### Testing Patterns
+- Unit tests for components in [__tests__/](mdc:frontend/src/__tests__/)
+- Test API integration with mocked responses
+- E2E tests with Playwright in [e2e/](mcd:frontend/e2e/)
+- Use React Testing Library for component tests
+
+### Code Organization
+- Use camelCase for JavaScript/TypeScript variables
+- PascalCase for component names and TypeScript interfaces
+- Keep components under 200 lines when possible
+- Extract custom hooks for reusable logic
+
+### Performance
+- Use React.memo for expensive components
+- Implement proper dependency arrays in useEffect
+- Lazy load components when appropriate
+- Optimize re-renders with useMemo and useCallback
+
+### Error Handling
+- Display user-friendly error messages
+- Handle network failures gracefully
+- Show loading states during async operations
+- Log errors to console for debugging

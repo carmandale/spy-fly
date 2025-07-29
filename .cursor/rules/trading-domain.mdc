@@ -1,0 +1,81 @@
+---
+description: Options trading and financial domain knowledge for SPY-FLY application
+---
+
+# Trading Domain Knowledge
+
+## Options Spread Strategies
+
+### Bull Call Spread
+- Long call at lower strike, short call at higher strike
+- Limited profit: `(short_strike - long_strike) - net_debit`
+- Limited risk: `net_debit` (premium paid)
+- Breakeven: `long_strike + net_debit`
+
+### Bear Put Spread
+- Long put at higher strike, short put at lower strike
+- Limited profit: `(long_strike - short_strike) - net_debit`
+- Limited risk: `net_debit` (premium paid)
+- Breakeven: `long_strike - net_debit`
+
+## Key Metrics and Calculations
+
+### Black-Scholes Variables
+- **S**: Current stock price (SPY price)
+- **K**: Strike price of the option
+- **T**: Time to expiration (in years)
+- **r**: Risk-free rate (treasury rate)
+- **σ**: Implied volatility
+
+### Greeks
+- **Delta**: Price sensitivity to underlying price changes
+- **Gamma**: Rate of change of delta
+- **Theta**: Time decay (premium erosion)
+- **Vega**: Sensitivity to volatility changes
+
+### Risk/Reward Metrics
+- **Max Profit**: Maximum possible gain
+- **Max Risk**: Maximum possible loss (usually net debit)
+- **Probability**: Chance of profit based on market conditions
+- **Expected Value**: `(probability × max_profit) - ((1-probability) × max_risk)`
+
+## Market Data Sources
+
+### Polygon API Integration
+- Real-time and historical options data
+- Market hours: 9:30 AM - 4:00 PM ET
+- Options chains with bid/ask spreads
+- Underlying asset data (SPY ETF)
+
+### VIX Integration
+- Volatility Index for market sentiment
+- VIX > 20: High volatility (fear)
+- VIX < 15: Low volatility (complacency)
+- Used for sentiment scoring in [sentiment_calculator.py](mdc:backend/app/services/sentiment_calculator.py)
+
+## Risk Management
+
+### Position Sizing
+- Maximum risk per trade: 2-5% of account
+- Diversification across expiration dates
+- Avoid over-concentration in single strategy
+
+### Risk Validation Rules
+- Minimum probability threshold (usually 60%+)
+- Maximum risk/reward ratios
+- Liquidity requirements (bid/ask spread width)
+- Time to expiration limits
+
+## Application-Specific Logic
+
+### Spread Selection Criteria
+- Liquidity: Tight bid/ask spreads
+- Volume: Sufficient open interest
+- Time decay: 15-45 days to expiration
+- Delta range: 0.15-0.35 for short strikes
+
+### Ranking Algorithm
+- 40% weight: Probability of profit
+- 30% weight: Risk/reward ratio
+- 30% weight: Market sentiment score
+- Implementation in [ranking_engine.py](mdc:backend/app/services/ranking_engine.py)

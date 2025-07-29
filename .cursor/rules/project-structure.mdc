@@ -1,0 +1,45 @@
+---
+alwaysApply: true
+---
+
+# SPY-FLY Project Structure Guide
+
+## Overview
+SPY-FLY is a trading application for options spread analysis and recommendations with a Python FastAPI backend and React TypeScript frontend.
+
+## Backend Structure (`/backend/`)
+- **Entry Point**: [main.py](mdc:backend/app/main.py) - FastAPI application setup
+- **Configuration**: [config.py](mdc:backend/app/config.py) - Environment and app settings
+- **Database**: [database.py](mdc:backend/app/core/database.py) - SQLAlchemy setup and session management
+- **Models**: [db_models.py](mdc:backend/app/models/db_models.py) - Database schema definitions
+- **API Routes**: [api.py](mdc:backend/app/api/v1/api.py) - Main API router
+- **Services**: Core business logic in [services/](mdc:backend/app/services/) directory
+
+### Key Services
+- [spread_selection_service.py](mdc:backend/app/services/spread_selection_service.py) - Main spread analysis
+- [ranking_engine.py](mdc:backend/app/services/ranking_engine.py) - Recommendation ranking
+- [trade_formatter.py](mdc:backend/app/services/trade_formatter.py) - Output formatting
+- [polygon_client.py](mdc:backend/app/services/polygon_client.py) - Market data integration
+- [black_scholes_calculator.py](mdc:backend/app/services/black_scholes_calculator.py) - Options pricing
+
+## Frontend Structure (`/frontend/`)
+- **Entry Point**: [main.tsx](mdc:frontend/src/main.tsx) - React application root
+- **Main Component**: [App.tsx](mdc:frontend/src/App.tsx) - App wrapper
+- **Dashboard**: [Dashboard.tsx](mdc:frontend/src/components/Dashboard.tsx) - Main trading interface
+- **API Client**: [client.ts](mdc:frontend/src/api/client.ts) - Backend communication
+
+### Key Components
+- [RecommendedSpreadsPanel.tsx](mdc:frontend/src/components/RecommendedSpreadsPanel.tsx) - Trade recommendations
+- [SentimentPanel.tsx](mdc:frontend/src/components/SentimentPanel.tsx) - Market sentiment
+- [TradeInputPanel.tsx](mdc:frontend/src/components/TradeInputPanel.tsx) - Trade entry
+- [LivePLMonitorPanel.tsx](mdc:frontend/src/components/LivePLMonitorPanel.tsx) - P&L tracking
+
+## Testing Strategy
+- **Backend Tests**: [tests/](mdc:backend/tests/) - Unit, integration, and performance tests
+- **Frontend Tests**: [__tests__/](mdc:frontend/src/__tests__/) - Component and API tests
+- **E2E Tests**: [e2e/](mdc:frontend/e2e/) - Playwright end-to-end tests
+
+## Development Commands
+- Backend: `python run_backend.py` or `uvicorn app.main:app`
+- Frontend: `npm run dev` in frontend directory
+- Tests: `pytest` (backend), `npm test` (frontend)

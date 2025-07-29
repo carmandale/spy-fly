@@ -78,7 +78,9 @@
       "Bash(cd:*)",
       "Bash(./stop.sh)",
       "Bash(gh pr checks:*)",
-      "Bash(gh issue:*)"
+      "Bash(gh issue:*)",
+      "Bash(uv pip:*)",
+      "Bash(PYTHONPATH=/Users/dalecarman/Groove Jones Dropbox/Dale Carman/Projects/dev/spy-fly/backend python3 -m pytest tests/unit/test_ranking_engine.py -v)"
     ],
     "deny": []
   }
