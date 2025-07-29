@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
+    ForeignKey,
     Index,
     Integer,
     Numeric,
@@ -11,6 +12,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -137,4 +139,107 @@ class APIRequestLog(Base):
         Index("idx_log_timestamp", "timestamp"),
         Index("idx_endpoint", "endpoint"),
         Index("idx_status_code", "status_code"),
+    )
+
+
+class AnalysisSession(Base):
+    """Track spread recommendation analysis sessions for caching and history."""
+
+    __tablename__ = "analysis_sessions"
+
+    id = Column(String(36), primary_key=True)  # UUID primary key
+    account_size = Column(Numeric(15, 2), nullable=False)
+    max_recommendations = Column(Integer, nullable=False, default=5)
+    
+    # Market conditions at time of analysis
+    spy_price = Column(Numeric(10, 4))
+    vix_level = Column(Numeric(6, 2))
+    sentiment_score = Column(Numeric(4, 3))
+    market_status = Column(String(20))
+    
+    # Analysis results
+    recommendations_count = Column(Integer, nullable=False, default=0)
+    avg_probability = Column(Numeric(6, 4))
+    avg_expected_value = Column(Numeric(10, 4))
+    total_capital_required = Column(Numeric(15, 2))
+    
+    # Session metadata
+    user_agent = Column(String(255))
+    ip_address = Column(String(45))  # IPv6 support
+    request_format = Column(String(20))  # json, text, clipboard
+    processing_time_ms = Column(Integer)
+    
+    # Timestamps
+    created_at = Column(DateTime, nullable=False, server_default=func.current_timestamp())
+    expires_at = Column(DateTime)  # For cache cleanup
+
+    # Relationship to spread recommendations
+    recommendations = relationship("SpreadRecommendationRecord", back_populates="session")
+
+    __table_args__ = (
+        Index("idx_session_created_at", "created_at"),
+        Index("idx_session_expires_at", "expires_at"),
+        Index("idx_session_account_size", "account_size"),
+    )
+
+
+class SpreadRecommendationRecord(Base):
+    """Store individual spread recommendations for tracking and analysis."""
+
+    __tablename__ = "spread_recommendations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(String(36), ForeignKey("analysis_sessions.id"), nullable=False)
+    symbol = Column(String(10), nullable=False, default='SPY')
+    
+    # Spread details
+    long_strike = Column(Numeric(10, 2), nullable=False)
+    short_strike = Column(Numeric(10, 2), nullable=False)
+    expiration_date = Column(Date, nullable=False)
+    
+    # Pricing information
+    long_premium = Column(Numeric(10, 4), nullable=False)
+    short_premium = Column(Numeric(10, 4), nullable=False)
+    net_debit = Column(Numeric(10, 4), nullable=False)
+    
+    # Risk metrics
+    max_risk = Column(Numeric(10, 4), nullable=False)
+    max_profit = Column(Numeric(10, 4), nullable=False)
+    risk_reward_ratio = Column(Numeric(8, 4), nullable=False)
+    breakeven_price = Column(Numeric(10, 4), nullable=False)
+    
+    # Market data
+    long_bid = Column(Numeric(10, 4), nullable=False)
+    long_ask = Column(Numeric(10, 4), nullable=False)
+    short_bid = Column(Numeric(10, 4), nullable=False)
+    short_ask = Column(Numeric(10, 4), nullable=False)
+    long_volume = Column(Integer, nullable=False)
+    short_volume = Column(Integer, nullable=False)
+    
+    # Analysis results
+    probability_of_profit = Column(Numeric(6, 4), nullable=False)
+    expected_value = Column(Numeric(10, 4), nullable=False)
+    sentiment_score = Column(Numeric(4, 3))
+    ranking_score = Column(Numeric(6, 4), nullable=False)
+    
+    # Position sizing
+    contracts_to_trade = Column(Integer, nullable=False)
+    total_cost = Column(Numeric(12, 2), nullable=False)
+    buying_power_used_pct = Column(Numeric(6, 4), nullable=False)
+    
+    # Metadata
+    rank_in_session = Column(Integer, nullable=False)
+    account_size = Column(Numeric(15, 2), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.current_timestamp())
+    updated_at = Column(DateTime, nullable=False, server_default=func.current_timestamp())
+
+    # Relationship to analysis session
+    session = relationship("AnalysisSession", back_populates="recommendations")
+
+    __table_args__ = (
+        Index("idx_session_id", "session_id"),
+        Index("idx_spread_created_at", "created_at"),
+        Index("idx_spread_ranking_score", "ranking_score"),
+        Index("idx_spread_probability", "probability_of_profit"),
+        Index("idx_spread_strikes", "long_strike", "short_strike"),
     )
