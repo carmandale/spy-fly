@@ -136,8 +136,11 @@ class SchedulerService:
             return
             
         try:
+            import asyncio
             # Use shutdown() without wait=True for async compatibility
             self.scheduler.shutdown(wait=False)
+            # Allow a brief moment for shutdown to complete
+            await asyncio.sleep(0.1)
             self._is_running = False
             logger.info("Scheduler stopped successfully")
         except Exception as e:
