@@ -152,11 +152,11 @@ describe('LivePLMonitorPanel', () => {
   it('applies correct CSS classes for profit colors', () => {
     render(<LivePLMonitorPanel plData={mockPLData} historicalData={mockHistoricalData} />)
     
-    // Check that profit values have green color classes
-    const profitElement = screen.getByText('+$50')
+    // Check that profit values have green color classes (on parent div)
+    const profitElement = screen.getByText('+$50').closest('div')
     expect(profitElement).toHaveClass('text-green-400')
     
-    const profitPercentElement = screen.getByText('(+10.00%)')
+    const profitPercentElement = screen.getByText('(+10.00%)').closest('div')
     expect(profitPercentElement).toHaveClass('text-green-400')
   })
 
