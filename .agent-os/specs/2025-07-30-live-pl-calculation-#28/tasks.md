@@ -7,13 +7,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ## Tasks
 
-- [ ] 1. Create Database Schema and Models
-  - [ ] 1.1 Write tests for new Position model fields
-  - [ ] 1.2 Create migration to add P/L fields to positions table
-  - [ ] 1.3 Write tests for PositionSnapshot model
-  - [ ] 1.4 Create position_snapshots table and model
-  - [ ] 1.5 Run migration and verify schema changes
-  - [ ] 1.6 Verify all tests pass
+- [x] 1. Create Database Schema and Models
+  - [x] 1.1 Write tests for new Position model fields
+  - [x] 1.2 Create migration to add P/L fields to positions table
+  - [x] 1.3 Write tests for PositionSnapshot model
+  - [x] 1.4 Create position_snapshots table and model
+  - [x] 1.5 Run migration and verify schema changes
+  - [x] 1.6 Verify all tests pass
 
 - [ ] 2. Implement P/L Calculation Service
   - [ ] 2.1 Write tests for PLCalculationService class
