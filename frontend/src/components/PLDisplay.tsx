@@ -45,8 +45,9 @@ const transformPLData = (apiData: any) => {
   }
 }
 
-// Transform historical data (placeholder for now)
-const transformHistoricalData = (apiData: any) => {
+// Transform historical data (placeholder for now - will be enhanced in future tasks)
+const transformHistoricalData = () => {
+  // TODO: Implement historical data transformation when history API is available
   return {
     equityCurve: [],
     winRate: 0,
