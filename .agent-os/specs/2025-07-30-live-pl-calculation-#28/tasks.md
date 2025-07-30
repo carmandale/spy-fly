@@ -39,13 +39,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 4.5 Add throttling to prevent update spam
   - [x] 4.6 Verify all tests pass
 
-- [ ] 5. Schedule P/L Snapshot Job
-  - [ ] 5.1 Write tests for scheduled P/L snapshots
-  - [ ] 5.2 Add calculate_pl_snapshot job to scheduler
-  - [ ] 5.3 Configure 15-minute interval during market hours
-  - [ ] 5.4 Implement snapshot storage logic
-  - [ ] 5.5 Test job execution and timing
-  - [ ] 5.6 Verify all tests pass
+- [x] 5. Schedule P/L Snapshot Job
+  - [x] 5.1 Write tests for scheduled P/L snapshots
+  - [x] 5.2 Add calculate_pl_snapshot job to scheduler
+  - [x] 5.3 Configure 15-minute interval during market hours
+  - [x] 5.4 Implement snapshot storage logic
+  - [x] 5.5 Test job execution and timing
+  - [x] 5.6 Verify all tests pass
 
 - [ ] 6. Create Frontend P/L Components
   - [ ] 6.1 Write tests for P/L display components
