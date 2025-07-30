@@ -195,6 +195,160 @@ class WebSocketManager:
         for client_id in disconnected_clients:
             await self.disconnect(client_id)
     
+    async def broadcast_pl_update(self, pl_data: dict | PLUpdate) -> None:
+        """
+        Broadcast P/L update to all connected clients.
+        
+        Args:
+            pl_data: P/L update data (dict or PLUpdate model)
+        """
+        if not self.connections:
+            return
+        
+        # Convert dict to PLUpdate model if needed
+        if isinstance(pl_data, dict):
+            pl_update = PLUpdate(**pl_data)
+        else:
+            pl_update = pl_data
+        
+        # Check if we should throttle this update
+        if not self._should_broadcast_pl_update(pl_update):
+            return
+        
+        # Cache the update
+        self.pl_cache = pl_update
+        self.last_pl_broadcast = datetime.now()
+        
+        # Broadcast to all connections
+        disconnected_clients = []
+        
+        for client_id in list(self.connections.keys()):
+            try:
+                await self._send_to_client(client_id, pl_update)
+            except WebSocketDisconnect:
+                disconnected_clients.append(client_id)
+            except Exception as e:
+                logger.error(f"Error sending P/L update to client {client_id}: {e}")
+                disconnected_clients.append(client_id)
+        
+        # Clean up disconnected clients
+        for client_id in disconnected_clients:
+            await self.disconnect(client_id)
+        
+        if pl_update.alert:
+            logger.warning(f"Stop-loss alert broadcasted to {len(self.connections)} clients")
+        else:
+            logger.debug(f"P/L update broadcasted to {len(self.connections)} clients")
+    
+    def _should_broadcast_pl_update(self, pl_update: PLUpdate) -> bool:
+        """
+        Determine if a P/L update should be broadcasted based on throttling rules.
+        
+        Args:
+            pl_update: P/L update to evaluate
+            
+        Returns:
+            True if update should be broadcasted, False if throttled
+        """
+        # Always broadcast alerts (stop-loss notifications)
+        if pl_update.alert:
+            return True
+        
+        # Always broadcast first P/L update
+        if self.pl_cache is None:
+            return True
+        
+        # Check throttling time
+        time_since_last = (datetime.now() - self.last_pl_broadcast).total_seconds()
+        if time_since_last < self.pl_update_throttle:
+            return False
+        
+        # Check if change is significant enough
+        cached_total = self.pl_cache.total_unrealized_pl
+        new_total = pl_update.total_unrealized_pl
+        change_amount = abs(new_total - cached_total)
+        
+        if change_amount >= self.pl_change_threshold:
+            return True
+        
+        # Check if any position has a stop-loss alert change
+        if self.pl_cache.positions and pl_update.positions:
+            cached_positions = {p.id: p for p in self.pl_cache.positions}
+            for new_pos in pl_update.positions:
+                if new_pos.id in cached_positions:
+                    cached_pos = cached_positions[new_pos.id]
+                    if new_pos.stop_loss_alert != cached_pos.stop_loss_alert:
+                        return True  # Alert status changed
+        
+        return False
+    
+    async def handle_price_update_with_pl(self, price_update: PriceUpdate, pl_service) -> None:
+        """
+        Handle price update and trigger P/L calculation if needed.
+        
+        This method integrates price updates with P/L calculations,
+        triggering P/L broadcasts when SPY price changes significantly.
+        
+        Args:
+            price_update: New SPY price data
+            pl_service: P/L calculation service instance
+        """
+        # First broadcast the price update
+        await self.broadcast_price_update("SPY", price_update)
+        
+        # Check if we should trigger P/L calculation
+        should_calculate_pl = False
+        
+        if "SPY" not in self.price_cache:
+            should_calculate_pl = True  # First price update
+        else:
+            cached_price = self.price_cache["SPY"]
+            price_change_percent = abs(price_update.change_percent or 0)
+            if price_change_percent >= self.price_change_threshold:
+                should_calculate_pl = True  # Significant price change
+        
+        if should_calculate_pl:
+            try:
+                # Calculate P/L for all positions
+                pl_results = await pl_service.calculate_all_positions_pl()
+                
+                if pl_results:
+                    # Convert to P/L update format
+                    positions_data = []
+                    has_alert = False
+                    
+                    for pl_data in pl_results:
+                        position_update = PLPositionUpdate(
+                            id=pl_data.position_id,
+                            symbol="SPY",  # All positions are SPY spreads
+                            unrealized_pl=float(pl_data.unrealized_pl),
+                            unrealized_pl_percent=float(pl_data.unrealized_pl_percent),
+                            current_value=float(pl_data.current_value),
+                            stop_loss_alert=pl_data.stop_loss_triggered
+                        )
+                        positions_data.append(position_update)
+                        
+                        if pl_data.stop_loss_triggered:
+                            has_alert = True
+                    
+                    # Calculate total P/L
+                    total_pl = sum(float(pl.unrealized_pl) for pl in pl_results)
+                    
+                    # Create P/L update
+                    pl_update = PLUpdate(
+                        positions=positions_data,
+                        total_unrealized_pl=total_pl,
+                        spy_price=price_update.price,
+                        timestamp=datetime.now().isoformat() + "Z",
+                        alert=has_alert
+                    )
+                    
+                    # Broadcast P/L update
+                    await self.broadcast_pl_update(pl_update)
+                    
+            except Exception as e:
+                logger.error(f"Error calculating P/L during price update: {e}")
+    
     async def _send_to_client(self, client_id: str, data: BaseModel) -> None:
         """
         Send data to a specific client.
