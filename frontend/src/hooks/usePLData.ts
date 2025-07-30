@@ -76,6 +76,7 @@ export const usePLData = (): UsePLDataReturn => {
   }, [])
 
   const refresh = useCallback(async () => {
+    setLoading(true)
     await fetchCurrentPL()
   }, [fetchCurrentPL])
 
