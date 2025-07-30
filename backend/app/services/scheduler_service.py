@@ -388,6 +388,7 @@ class SchedulerService:
                     current_value=pl_data.current_value,
                     unrealized_pl=pl_data.unrealized_pl,
                     unrealized_pl_percent=pl_data.unrealized_pl_percent,
+                    risk_percent=pl_data.risk_percent,
                     stop_loss_triggered=pl_data.stop_loss_triggered,
                     snapshot_time=pl_data.calculation_time
                 )
