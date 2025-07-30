@@ -136,7 +136,8 @@ class SchedulerService:
             return
             
         try:
-            self.scheduler.shutdown(wait=True)
+            # Use shutdown() without wait=True for async compatibility
+            self.scheduler.shutdown(wait=False)
             self._is_running = False
             logger.info("Scheduler stopped successfully")
         except Exception as e:
