@@ -28,11 +28,23 @@ check_servers() {
     local backend_running=false
     local frontend_running=false
     
-    if lsof -nP -iTCP:8003 -sTCP:LISTEN &>/dev/null; then
+    # Load environment variables
+    if [ -f backend/.env ]; then
+        export $(cat backend/.env | grep -v '^#' | xargs)
+    fi
+    BACKEND_PORT=${API_PORT:-8003}
+    
+    if lsof -nP -iTCP:$BACKEND_PORT -sTCP:LISTEN &>/dev/null; then
         backend_running=true
     fi
     
-    if lsof -nP -iTCP:3003 -sTCP:LISTEN &>/dev/null; then
+    # Load environment variables  
+    if [ -f frontend/.env.local ]; then
+        export $(cat frontend/.env.local | grep -v '^#' | xargs)
+    fi
+    FRONTEND_PORT=${PORT:-3003}
+    
+    if lsof -nP -iTCP:$FRONTEND_PORT -sTCP:LISTEN &>/dev/null; then
         frontend_running=true
     fi
     
@@ -43,12 +55,12 @@ check_servers() {
         sleep 10  # Give servers time to start
         
         # Verify they started
-        if ! lsof -nP -iTCP:8003 -sTCP:LISTEN &>/dev/null; then
+        if ! lsof -nP -iTCP:$BACKEND_PORT -sTCP:LISTEN &>/dev/null; then
             print_color "$RED" "❌ Backend failed to start"
             exit 1
         fi
         
-        if ! lsof -nP -iTCP:3003 -sTCP:LISTEN &>/dev/null; then
+        if ! lsof -nP -iTCP:$FRONTEND_PORT -sTCP:LISTEN &>/dev/null; then
             print_color "$RED" "❌ Frontend failed to start"
             exit 1
         fi

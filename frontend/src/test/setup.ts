@@ -4,8 +4,8 @@ import { vi } from 'vitest'
 // Set up environment variables for tests
 Object.defineProperty(import.meta, 'env', {
   value: {
-    VITE_API_BASE_URL: 'http://localhost:8003',
-    VITE_WS_BASE_URL: 'ws://localhost:8003',
+      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:8003',
+  VITE_WS_BASE_URL: process.env.VITE_WS_BASE_URL || 'ws://localhost:8003',
     ...import.meta.env,
   },
   configurable: true,

@@ -5,7 +5,7 @@ import App from '../App'
 // Mock the API client with methods that match the actual implementation
 vi.mock('../api/client', () => ({
   apiClient: {
-    baseURL: 'http://localhost:8003',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003',
     health: vi.fn().mockResolvedValue({ status: 'healthy' }),
     getQuote: vi.fn().mockResolvedValue({
       ticker: 'SPY',

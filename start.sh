@@ -34,11 +34,39 @@ print_color() {
     printf "%b%s%b\n" "$color" "$message" "$NC"
 }
 
-# SPY-FLY uses unique ports to avoid conflicts
-# Backend: 8003, Frontend: 3003
+# SPY-FLY Port Configuration - Load from environment files
+# Load backend environment variables and preserve quotes
+if [ -f backend/.env ]; then
+    # Read environment variables while preserving quotes
+    while IFS='=' read -r key value; do
+        # Skip comments and empty lines
+        if [[ $key =~ ^[[:space:]]*# ]] || [[ -z "$key" ]]; then
+            continue
+        fi
+        # Export the variable, preserving quotes for JSON values
+        export "$key=$value"
+    done < <(grep -E '^[^#]*=' backend/.env)
+fi
 
-# Check if backend port is already in use
-BACKEND_PORT=8003
+# Load frontend environment variables  
+if [ -f frontend/.env.local ]; then
+    set -a
+    source frontend/.env.local 
+    set +a
+fi
+
+# Verify required environment variables are set
+if [ -z "$API_PORT" ]; then
+    echo "ERROR: API_PORT not found in backend/.env"
+    exit 1
+fi
+
+if [ -z "$PORT" ]; then
+    echo "ERROR: PORT not found in frontend/.env.local" 
+    exit 1
+fi
+
+BACKEND_PORT=$API_PORT
 if check_port $BACKEND_PORT; then
     print_color "$RED" "⚠️  Port $BACKEND_PORT is already in use. Please stop the existing process first."
     echo "Run: lsof -ti:$BACKEND_PORT | xargs kill -9"
@@ -46,7 +74,7 @@ if check_port $BACKEND_PORT; then
 fi
 
 # Check if frontend port is already in use
-FRONTEND_PORT=3003
+FRONTEND_PORT=$PORT
 if check_port $FRONTEND_PORT; then
     print_color "$RED" "⚠️  Port $FRONTEND_PORT is already in use. Please stop the existing process first."
     echo "Run: lsof -ti:$FRONTEND_PORT | xargs kill -9"
@@ -105,8 +133,8 @@ print_color "$BLUE" "Starting Backend Server..."
         uv pip install -r requirements.txt
     fi
     
-    # Start backend with uvicorn directly, reading port from environment
-    exec uvicorn app.main:app --host 0.0.0.0 --port ${API_PORT:-8003} --reload > ../logs/backend.log 2>&1
+          # Start backend with uvicorn - load environment in subshell
+      exec env API_PORT=$API_PORT CORS_ORIGINS="$CORS_ORIGINS" POLYGON_API_KEY="$POLYGON_API_KEY" DATABASE_URL="$DATABASE_URL" ENVIRONMENT="$ENVIRONMENT" DEBUG="$DEBUG" uvicorn app.main:app --host 0.0.0.0 --port $API_PORT --reload > ../logs/backend.log 2>&1
 ) &
 BACKEND_PID=$!
 

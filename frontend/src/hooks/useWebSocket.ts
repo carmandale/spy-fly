@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { WS_BASE_URL } from '../config'
 import { useToast } from './useToast'
 
 export interface PriceUpdate {
@@ -60,7 +61,7 @@ export interface UseWebSocketReturn {
 }
 
 const DEFAULT_OPTIONS: Required<UseWebSocketOptions> = {
-  url: 'ws://localhost:8003/api/v1/ws/price-feed',
+  url: `${WS_BASE_URL}/api/v1/ws/price-feed`,
   reconnectAttempts: 5,
   reconnectInterval: 3000,
   heartbeatInterval: 30000,

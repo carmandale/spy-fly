@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """Demo script to show trade functionality."""
+import os
 import requests
 from datetime import datetime
 from pprint import pprint
+from dotenv import load_dotenv
 
-API_BASE_URL = "http://localhost:8003/api/v1"
+# Load environment variables
+load_dotenv()
+
+# Get API URL from environment - MUST be set in .env
+API_PORT = os.getenv("API_PORT")
+if not API_PORT:
+    raise ValueError("API_PORT environment variable is required")
+API_BASE_URL = f"http://localhost:{API_PORT}/api/v1"
 
 def demo_trade_flow():
     """Demonstrate the trade input and history functionality."""
@@ -99,7 +108,9 @@ def demo_trade_flow():
     
     print("\n=== Demo Complete ===")
     print("\nYou can now:")
-    print("- Visit http://localhost:3003 to see the dashboard")
+    # Get frontend port from environment
+    frontend_port = os.getenv("PORT", "3003")  # Fallback for display only
+    print(f"- Visit http://localhost:{frontend_port} to see the dashboard")
     print("- Click 'Record Trade' to manually input trades")
     print("- View the trade history table at the bottom")
     print("- Filter trades by date and status")
@@ -108,6 +119,6 @@ if __name__ == "__main__":
     try:
         demo_trade_flow()
     except requests.exceptions.ConnectionError:
-        print("Error: Could not connect to API. Make sure the backend is running on port 8003.")
+        print(f"Error: Could not connect to API. Make sure the backend is running on port {API_PORT}.")
     except Exception as e:
         print(f"Error: {e}")

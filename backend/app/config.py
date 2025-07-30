@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./spy_fly.db"
     environment: str = "development"
     debug: bool = True
-    cors_origins: list[str] = ["http://localhost:3003"]
-    api_port: int = Field(default=8003, ge=1, le=65535)
+    cors_origins: list[str] = Field(default_factory=list)
+    api_port: int = Field(ge=1, le=65535)
 
     # Polygon.io settings
     polygon_api_key: str = ""
@@ -122,7 +122,7 @@ class Settings(BaseSettings):
         env_file=".env",
         case_sensitive=False,
         validate_assignment=True,
-        json_schema_extra={"example": {"cors_origins": ["http://localhost:3003"]}},
+         
     )
 
 

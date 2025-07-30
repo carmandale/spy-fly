@@ -94,14 +94,31 @@ stop_by_port() {
     fi
 }
 
+# Load environment variables from proper files
+if [ -f backend/.env ]; then
+    set -a
+    source backend/.env
+    set +a
+fi
+
+if [ -f frontend/.env.local ]; then
+    set -a
+    source frontend/.env.local
+    set +a
+fi
+
+# Use environment variables with fallbacks for stop script only
+BACKEND_PORT=${API_PORT:-8003}
+FRONTEND_PORT=${PORT:-3003}
+
 # Stop backend server
 if ! stop_by_pid_file ".backend.pid" "Backend"; then
-    stop_by_port 8003 "Backend"
+    stop_by_port $BACKEND_PORT "Backend"
 fi
 
 # Stop frontend server
 if ! stop_by_pid_file ".frontend.pid" "Frontend"; then
-    stop_by_port 3003 "Frontend"
+    stop_by_port $FRONTEND_PORT "Frontend"
 fi
 
 # Clean up any orphaned log files

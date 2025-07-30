@@ -1,8 +1,14 @@
-// API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003'
+// API Configuration - MUST be set in .env.local
+if (!import.meta.env.VITE_API_BASE_URL) {
+  throw new Error('VITE_API_BASE_URL environment variable is required')
+}
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
-// WebSocket URL for real-time updates (future enhancement)
-export const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8003'
+// WebSocket URL - MUST be set in .env.local  
+if (!import.meta.env.VITE_WS_BASE_URL) {
+  throw new Error('VITE_WS_BASE_URL environment variable is required')
+}
+export const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL
 
 // Update intervals (in milliseconds)
 export const UPDATE_INTERVALS = {

@@ -10,8 +10,11 @@ from dotenv import load_dotenv
 # Load environment variables from .env (we're being run from backend directory)
 load_dotenv(".env")
 
-# Get port from environment, default to 8003
-port = int(os.getenv("API_PORT", 8003))
+# Get port from environment - MUST be set in .env
+api_port = os.getenv("API_PORT")
+if not api_port:
+    raise ValueError("API_PORT environment variable is required")
+port = int(api_port)
 
 if __name__ == "__main__":
     uvicorn.run(
