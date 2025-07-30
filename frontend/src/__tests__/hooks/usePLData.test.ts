@@ -91,6 +91,9 @@ describe('usePLData', () => {
 
   it('fetches P/L history for a specific position', async () => {
     const mockApiClient = apiClient as any
+    // Mock initial P/L call 
+    mockApiClient.get.mockResolvedValueOnce({ data: mockPLResponse })
+    // Mock history call
     mockApiClient.get.mockResolvedValueOnce({ data: mockPLHistoryResponse })
 
     const { result } = renderHook(() => usePLData())
@@ -101,12 +104,8 @@ describe('usePLData', () => {
     })
 
     // Fetch history for position 1
-    const historyPromise = result.current.fetchPLHistory(1)
-
-    await waitFor(async () => {
-      const history = await historyPromise
-      expect(history).toEqual(mockPLHistoryResponse)
-    })
+    const history = await result.current.fetchPLHistory(1)
+    expect(history).toEqual(mockPLHistoryResponse)
 
     expect(mockApiClient.get).toHaveBeenCalledWith('/api/v1/positions/1/pl/history')
   })
