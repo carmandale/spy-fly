@@ -1,12 +1,14 @@
 """SQLAlchemy database models for market data storage."""
 
 from sqlalchemy import (
+    Boolean,
     Column,
     Date,
     DateTime,
     ForeignKey,
     Index,
     Integer,
+    JSON,
     Numeric,
     String,
     Text,
@@ -242,4 +244,38 @@ class SpreadRecommendationRecord(Base):
         Index("idx_spread_ranking_score", "ranking_score"),
         Index("idx_spread_probability", "probability_of_profit"),
         Index("idx_spread_strikes", "long_strike", "short_strike"),
+    )
+
+
+class MorningScanResult(Base):
+    """Store results from scheduled morning scans for tracking and analysis."""
+
+    __tablename__ = "morning_scan_results"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    
+    # Scan execution details
+    scan_time = Column(DateTime, nullable=False)
+    success = Column(Boolean, nullable=False, default=False)
+    is_manual = Column(Boolean, nullable=False, default=False)
+    duration_seconds = Column(Numeric(8, 2))
+    
+    # Scan configuration
+    account_size = Column(Numeric(15, 2), nullable=False)
+    
+    # Results summary
+    recommendations_count = Column(Integer, nullable=False, default=0)
+    error_message = Column(Text)
+    
+    # Scan metrics (stored as JSON)
+    scan_metrics = Column(JSON)  # Contains metrics like avg_probability, high_quality_count, etc.
+    
+    # Metadata
+    created_at = Column(DateTime, nullable=False, server_default=func.current_timestamp())
+
+    __table_args__ = (
+        Index("idx_scan_time", "scan_time"),
+        Index("idx_scan_success", "success"),
+        Index("idx_scan_manual", "is_manual"),
+        Index("idx_scan_created_at", "created_at"),
     )
