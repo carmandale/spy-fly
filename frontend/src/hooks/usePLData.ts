@@ -67,12 +67,8 @@ export const usePLData = (): UsePLDataReturn => {
   }, [])
 
   const fetchPLHistory = useCallback(async (positionId: number): Promise<PLHistoryEntry[]> => {
-    try {
-      const response = await apiClient.get(`/api/v1/positions/${positionId}/pl/history`)
-      return response?.data || response
-    } catch (err) {
-      throw err
-    }
+    const response = await apiClient.get(`/api/v1/positions/${positionId}/pl/history`)
+    return response.data
   }, [])
 
   const refresh = useCallback(async () => {
