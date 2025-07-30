@@ -37,8 +37,8 @@ class TestPositionModel:
             stop_loss_alert_active=False
         )
         
-        db_session.add(position)
-        db_session.commit()
+        test_session.add(position)
+        test_session.commit()
         
         assert position.id is not None
         assert position.symbol == "SPY"
@@ -52,7 +52,7 @@ class TestPositionModel:
         assert position.latest_unrealized_pl_percent == Decimal("10.00")
         assert position.stop_loss_alert_active is False
         
-    def test_position_defaults(self, db_session):
+    def test_position_defaults(self, test_session):
         """Test position model default values."""
         position = Position(
             symbol="SPY",
@@ -66,8 +66,8 @@ class TestPositionModel:
             breakeven_price=Decimal("452.50")
         )
         
-        db_session.add(position)
-        db_session.commit()
+        test_session.add(position)
+        test_session.commit()
         
         assert position.status == "open"
         assert position.latest_value is None
@@ -77,7 +77,7 @@ class TestPositionModel:
         assert position.stop_loss_alert_active is False
         assert position.stop_loss_alert_time is None
         
-    def test_position_required_fields(self, db_session):
+    def test_position_required_fields(self, test_session):
         """Test that required fields are enforced."""
         # Missing required fields should raise error
         position = Position(
@@ -86,11 +86,11 @@ class TestPositionModel:
             # Missing other required fields
         )
         
-        db_session.add(position)
+        test_session.add(position)
         with pytest.raises(IntegrityError):
-            db_session.commit()
+            test_session.commit()
             
-    def test_position_status_values(self, db_session):
+    def test_position_status_values(self, test_session):
         """Test position status field accepts valid values."""
         # Valid statuses
         for status in ["open", "closed", "expired"]:
@@ -106,12 +106,12 @@ class TestPositionModel:
                 breakeven_price=Decimal("452.50"),
                 status=status
             )
-            db_session.add(position)
-            db_session.commit()
+            test_session.add(position)
+            test_session.commit()
             assert position.status == status
-            db_session.rollback()
+            test_session.rollback()
             
-    def test_stop_loss_alert_fields(self, db_session):
+    def test_stop_loss_alert_fields(self, test_session):
         """Test stop-loss alert tracking fields."""
         now = datetime.utcnow()
         position = Position(
@@ -129,13 +129,13 @@ class TestPositionModel:
             stop_loss_alert_time=now
         )
         
-        db_session.add(position)
-        db_session.commit()
+        test_session.add(position)
+        test_session.commit()
         
         assert position.stop_loss_alert_active is True
         assert position.stop_loss_alert_time == now
         
-    def test_position_relationship_to_snapshots(self, db_session):
+    def test_position_relationship_to_snapshots(self, test_session):
         """Test relationship between Position and PositionSnapshot."""
         position = Position(
             symbol="SPY",
@@ -149,8 +149,8 @@ class TestPositionModel:
             breakeven_price=Decimal("452.50")
         )
         
-        db_session.add(position)
-        db_session.commit()
+        test_session.add(position)
+        test_session.commit()
         
         # Add snapshots
         snapshot1 = PositionSnapshot(
@@ -173,9 +173,9 @@ class TestPositionModel:
             risk_percent=Decimal("-10.00")
         )
         
-        db_session.add(snapshot1)
-        db_session.add(snapshot2)
-        db_session.commit()
+        test_session.add(snapshot1)
+        test_session.add(snapshot2)
+        test_session.commit()
         
         # Test relationship
         assert len(position.snapshots) == 2
@@ -186,7 +186,7 @@ class TestPositionModel:
 class TestPositionSnapshotModel:
     """Test PositionSnapshot model functionality."""
     
-    def test_create_snapshot(self, db_session):
+    def test_create_snapshot(self, test_session):
         """Test creating a position snapshot with all fields."""
         # First create a position
         position = Position(
@@ -200,8 +200,8 @@ class TestPositionSnapshotModel:
             max_profit=Decimal("250.00"),
             breakeven_price=Decimal("452.50")
         )
-        db_session.add(position)
-        db_session.commit()
+        test_session.add(position)
+        test_session.commit()
         
         # Create snapshot
         snapshot = PositionSnapshot(
@@ -219,8 +219,8 @@ class TestPositionSnapshotModel:
             stop_loss_triggered=False
         )
         
-        db_session.add(snapshot)
-        db_session.commit()
+        test_session.add(snapshot)
+        test_session.commit()
         
         assert snapshot.id is not None
         assert snapshot.position_id == position.id
@@ -231,7 +231,7 @@ class TestPositionSnapshotModel:
         assert snapshot.risk_percent == Decimal("-5.00")
         assert snapshot.stop_loss_triggered is False
         
-    def test_snapshot_required_fields(self, db_session):
+    def test_snapshot_required_fields(self, test_session):
         """Test that required snapshot fields are enforced."""
         # Create position first
         position = Position(
@@ -245,8 +245,8 @@ class TestPositionSnapshotModel:
             max_profit=Decimal("250.00"),
             breakeven_price=Decimal("452.50")
         )
-        db_session.add(position)
-        db_session.commit()
+        test_session.add(position)
+        test_session.commit()
         
         # Missing required fields
         snapshot = PositionSnapshot(
@@ -255,11 +255,11 @@ class TestPositionSnapshotModel:
             # Missing other required fields
         )
         
-        db_session.add(snapshot)
+        test_session.add(snapshot)
         with pytest.raises(IntegrityError):
-            db_session.commit()
+            test_session.commit()
             
-    def test_snapshot_foreign_key_constraint(self, db_session):
+    def test_snapshot_foreign_key_constraint(self, test_session):
         """Test foreign key constraint to Position."""
         # Try to create snapshot with non-existent position_id
         snapshot = PositionSnapshot(
@@ -272,11 +272,11 @@ class TestPositionSnapshotModel:
             risk_percent=Decimal("-5.00")
         )
         
-        db_session.add(snapshot)
+        test_session.add(snapshot)
         with pytest.raises(IntegrityError):
-            db_session.commit()
+            test_session.commit()
             
-    def test_stop_loss_triggered_flag(self, db_session):
+    def test_stop_loss_triggered_flag(self, test_session):
         """Test stop-loss triggered flag in snapshots."""
         # Create position
         position = Position(
@@ -290,8 +290,8 @@ class TestPositionSnapshotModel:
             max_profit=Decimal("250.00"),
             breakeven_price=Decimal("452.50")
         )
-        db_session.add(position)
-        db_session.commit()
+        test_session.add(position)
+        test_session.commit()
         
         # Create snapshot with stop-loss triggered
         snapshot = PositionSnapshot(
@@ -305,13 +305,13 @@ class TestPositionSnapshotModel:
             stop_loss_triggered=True
         )
         
-        db_session.add(snapshot)
-        db_session.commit()
+        test_session.add(snapshot)
+        test_session.commit()
         
         assert snapshot.stop_loss_triggered is True
         assert snapshot.risk_percent == Decimal("30.00")
         
-    def test_snapshot_ordering(self, db_session):
+    def test_snapshot_ordering(self, test_session):
         """Test that snapshots can be ordered by time."""
         # Create position
         position = Position(
@@ -325,8 +325,8 @@ class TestPositionSnapshotModel:
             max_profit=Decimal("250.00"),
             breakeven_price=Decimal("452.50")
         )
-        db_session.add(position)
-        db_session.commit()
+        test_session.add(position)
+        test_session.commit()
         
         # Create multiple snapshots
         times = [
@@ -345,12 +345,12 @@ class TestPositionSnapshotModel:
                 unrealized_pl_percent=Decimal(f"{i+1}.00"),
                 risk_percent=Decimal(f"-{i+1}.00")
             )
-            db_session.add(snapshot)
+            test_session.add(snapshot)
         
-        db_session.commit()
+        test_session.commit()
         
         # Query snapshots ordered by time
-        snapshots = db_session.query(PositionSnapshot).filter_by(
+        snapshots = test_session.query(PositionSnapshot).filter_by(
             position_id=position.id
         ).order_by(PositionSnapshot.snapshot_time).all()
         
