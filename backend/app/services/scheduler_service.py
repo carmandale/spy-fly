@@ -79,35 +79,55 @@ class SchedulerService:
             timezone='America/New_York'  # ET timezone for market hours
         )
         
-    async def start_scheduler(self) -> None:
-        """Start the scheduler and add the morning scan job."""
+    async def start(self) -> None:
+        """Start the scheduler and add scheduled jobs."""
         if self._is_running:
             logger.warning("Scheduler is already running")
             return
             
         try:
-            # Add the morning scan job - runs at 9:45 AM ET, Monday-Friday
-            self.scheduler.add_job(
-                func=self._morning_scan_job,
-                trigger=CronTrigger(
-                    hour=9,
-                    minute=45,
-                    day_of_week='mon-fri',
-                    timezone='America/New_York'
-                ),
-                id='morning_scan',
-                name='Morning Market Scan',
-                replace_existing=True
-            )
+            # Add the morning scan job if spread service is available
+            if self.spread_service:
+                self.scheduler.add_job(
+                    func=self._morning_scan_job,
+                    trigger=CronTrigger(
+                        hour=9,
+                        minute=45,
+                        day_of_week='mon-fri',
+                        timezone='America/New_York'
+                    ),
+                    id='morning_scan',
+                    name='Morning Market Scan',
+                    replace_existing=True
+                )
+                logger.info("Morning scan job scheduled for 9:45 AM ET")
+            
+            # Add P/L snapshot job if P/L service is available
+            if self.pl_service:
+                self.scheduler.add_job(
+                    func=self.calculate_pl_snapshot,
+                    trigger=IntervalTrigger(
+                        minutes=15,
+                        timezone='America/New_York'
+                    ),
+                    id='pl_snapshot',
+                    name='P/L Snapshot Every 15 Minutes',
+                    replace_existing=True
+                )
+                logger.info("P/L snapshot job scheduled for every 15 minutes")
             
             # Start the scheduler
             self.scheduler.start()
             self._is_running = True
-            logger.info("Scheduler started successfully - morning scan scheduled for 9:45 AM ET")
+            logger.info("Scheduler started successfully")
             
         except Exception as e:
             logger.error(f"Failed to start scheduler: {e}")
             raise
+    
+    async def start_scheduler(self) -> None:
+        """Legacy method name - delegates to start()."""
+        await self.start()
     
     async def stop_scheduler(self) -> None:
         """Stop the scheduler gracefully."""
