@@ -392,7 +392,7 @@ class TestPLSnapshotScheduling:
             await scheduler_service.calculate_pl_snapshot()
         
         # Verify both snapshots exist
-        snapshots = scheduler_service.db_session.query(PositionSnapshot).filter_by(position_id=1).order_by(PositionSnapshot.created_at).all()
+        snapshots = scheduler_service.db_session.query(PositionSnapshot).filter_by(position_id=1).order_by(PositionSnapshot.snapshot_time).all()
         assert len(snapshots) == 2
         
         # Verify progression in P/L values
@@ -402,7 +402,7 @@ class TestPLSnapshotScheduling:
         assert snapshots[1].spy_price == Decimal("451.50")
         
         # Verify timestamps show progression
-        assert snapshots[1].created_at > snapshots[0].created_at
+        assert snapshots[1].snapshot_time > snapshots[0].snapshot_time
     
     @pytest.mark.asyncio
     async def test_concurrent_snapshot_execution(self, scheduler_service, sample_positions, mock_pl_service):
