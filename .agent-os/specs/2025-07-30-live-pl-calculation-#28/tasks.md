@@ -31,13 +31,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 3.5 Add API documentation
   - [x] 3.6 Verify all tests pass
 
-- [ ] 4. Integrate WebSocket P/L Updates
-  - [ ] 4.1 Write tests for WebSocket P/L broadcasting
-  - [ ] 4.2 Extend WebSocketManager to handle P/L updates
-  - [ ] 4.3 Subscribe P/L service to SPY price updates
-  - [ ] 4.4 Implement pl_update message broadcasting
-  - [ ] 4.5 Add throttling to prevent update spam
-  - [ ] 4.6 Verify all tests pass
+- [x] 4. Integrate WebSocket P/L Updates
+  - [x] 4.1 Write tests for WebSocket P/L broadcasting
+  - [x] 4.2 Extend WebSocketManager to handle P/L updates
+  - [x] 4.3 Subscribe P/L service to SPY price updates
+  - [x] 4.4 Implement pl_update message broadcasting
+  - [x] 4.5 Add throttling to prevent update spam
+  - [x] 4.6 Verify all tests pass
 
 - [ ] 5. Schedule P/L Snapshot Job
   - [ ] 5.1 Write tests for scheduled P/L snapshots
