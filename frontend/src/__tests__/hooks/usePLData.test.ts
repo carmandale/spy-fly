@@ -150,6 +150,7 @@ describe('usePLData', () => {
 
   it('provides loading state during refresh', async () => {
     const mockApiClient = apiClient as any
+    // Mock initial P/L call
     mockApiClient.get.mockResolvedValueOnce({ data: mockPLResponse })
 
     const { result } = renderHook(() => usePLData())
@@ -165,8 +166,10 @@ describe('usePLData', () => {
 
     const refreshPromise = result.current.refresh()
     
-    // Should be loading during refresh
-    expect(result.current.loading).toBe(true)
+    // Should be loading during refresh (check immediately)
+    await waitFor(() => {
+      expect(result.current.loading).toBe(true)
+    })
 
     await refreshPromise
 
