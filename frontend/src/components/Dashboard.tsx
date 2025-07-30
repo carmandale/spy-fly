@@ -69,9 +69,7 @@ const Dashboard: React.FC = () => {
     isConnected,
     isConnecting,
     connectionError,
-    latestPrice,
-    connect: connectWebSocket,
-    disconnect: disconnectWebSocket
+    latestPrice
   } = useWebSocket({
     autoConnect: true,
     reconnectAttempts: 5,
