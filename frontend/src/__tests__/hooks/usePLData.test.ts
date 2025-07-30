@@ -177,7 +177,10 @@ describe('usePLData', () => {
 
     await refreshPromise
 
-    expect(result.current.loading).toBe(false)
+    // Wait for loading to finish
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
   })
 
   it('calculates derived P/L metrics correctly', async () => {
