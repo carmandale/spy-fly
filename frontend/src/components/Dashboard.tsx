@@ -115,6 +115,29 @@ const Dashboard: React.FC = () => {
     avgProfitLoss: 0,
   })
 
+  // Update market data when WebSocket price updates arrive
+  useEffect(() => {
+    if (latestPrice && latestPrice.ticker === 'SPY') {
+      setMarketData(prev => ({
+        ...prev,
+        spyPrice: latestPrice.price,
+        spyChange: latestPrice.change_percent || 0,
+        apiStatus: 'connected'
+      }))
+    }
+  }, [latestPrice])
+
+  // Update API status based on WebSocket connection state
+  useEffect(() => {
+    if (isConnecting) {
+      setMarketData(prev => ({ ...prev, apiStatus: 'reconnecting' }))
+    } else if (isConnected) {
+      setMarketData(prev => ({ ...prev, apiStatus: 'connected' }))
+    } else if (connectionError) {
+      setMarketData(prev => ({ ...prev, apiStatus: 'disconnected' }))
+    }
+  }, [isConnected, isConnecting, connectionError])
+
   // Fetch sentiment data
   const fetchSentiment = async () => {
     try {
