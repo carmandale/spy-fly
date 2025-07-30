@@ -326,7 +326,7 @@ const Dashboard: React.FC = () => {
 
               {/* Live P/L Monitor */}
               <div className="lg:col-span-1">
-                <LivePLMonitorPanel plData={plData} historicalData={historicalData} />
+                <PLDisplay />
               </div>
 
               {/* Recommended Spreads - Full width on smaller screens */}
