@@ -6,6 +6,7 @@ import RecommendedSpreadsPanel from './RecommendedSpreadsPanel'
 import LivePLMonitorPanel from './LivePLMonitorPanel'
 import { TradeManagementPanel } from './TradeManagementPanel'
 import { apiClient } from '../api/client'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 interface MarketData {
   spyPrice: number
@@ -63,6 +64,18 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'trades'>('dashboard')
 
+  // Initialize WebSocket connection for real-time price updates
+  const {
+    isConnected,
+    isConnecting,
+    connectionError,
+    latestPrice
+  } = useWebSocket({
+    autoConnect: true,
+    reconnectAttempts: 5,
+    reconnectInterval: 3000
+  })
+
   const [marketData, setMarketData] = useState<MarketData>({
     spyPrice: 0,
     spyChange: 0,
@@ -99,6 +112,29 @@ const Dashboard: React.FC = () => {
     winRate: 0,
     avgProfitLoss: 0,
   })
+
+  // Update market data when WebSocket price updates arrive
+  useEffect(() => {
+    if (latestPrice && latestPrice.ticker === 'SPY') {
+      setMarketData(prev => ({
+        ...prev,
+        spyPrice: latestPrice.price,
+        spyChange: latestPrice.change_percent || 0,
+        apiStatus: 'connected'
+      }))
+    }
+  }, [latestPrice])
+
+  // Update API status based on WebSocket connection state
+  useEffect(() => {
+    if (isConnecting) {
+      setMarketData(prev => ({ ...prev, apiStatus: 'reconnecting' }))
+    } else if (isConnected) {
+      setMarketData(prev => ({ ...prev, apiStatus: 'connected' }))
+    } else if (connectionError) {
+      setMarketData(prev => ({ ...prev, apiStatus: 'disconnected' }))
+    }
+  }, [isConnected, isConnecting, connectionError])
 
   // Fetch sentiment data
   const fetchSentiment = async () => {
@@ -217,7 +253,14 @@ const Dashboard: React.FC = () => {
     const loadData = async () => {
       setLoading(true)
       try {
-        await Promise.all([fetchSentiment(), fetchMarketQuote(), fetchOptionsData()])
+        // Load initial data - WebSocket will handle real-time SPY price updates
+        await Promise.all([fetchSentiment(), fetchOptionsData()])
+        
+        // Get initial SPY quote if WebSocket isn't connected yet
+        if (!isConnected) {
+          await fetchMarketQuote()
+        }
+        
         updateMarketSession()
       } catch (error) {
         console.error('Error loading dashboard:', error)
@@ -229,11 +272,16 @@ const Dashboard: React.FC = () => {
 
     loadData()
 
-    // Refresh data every 30 seconds
+    // Refresh sentiment and session data every 30 seconds
+    // SPY price updates now come from WebSocket
     const interval = setInterval(() => {
       fetchSentiment()
-      fetchMarketQuote()
       updateMarketSession()
+      
+      // Only poll SPY price if WebSocket is disconnected
+      if (!isConnected) {
+        fetchMarketQuote()
+      }
     }, 30000)
 
     // Update session status every minute
@@ -243,7 +291,7 @@ const Dashboard: React.FC = () => {
       clearInterval(interval)
       clearInterval(sessionInterval)
     }
-  }, [])
+  }, [isConnected]) // Add isConnected to dependency array
 
   if (loading) {
     return (

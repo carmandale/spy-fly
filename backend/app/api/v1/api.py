@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import health, market, recommendations, scheduler, sentiment, trades
+from app.api.v1.endpoints import health, market, recommendations, scheduler, sentiment, trades, websocket
 
 api_router = APIRouter()
 
@@ -10,3 +10,4 @@ api_router.include_router(recommendations.router, prefix="/recommendations", tag
 api_router.include_router(scheduler.router, prefix="/scheduler", tags=["scheduler"])
 api_router.include_router(sentiment.router, prefix="/sentiment", tags=["sentiment"])
 api_router.include_router(trades.router, prefix="/trades", tags=["trades"])
+api_router.include_router(websocket.router, prefix="/ws", tags=["websocket"])
