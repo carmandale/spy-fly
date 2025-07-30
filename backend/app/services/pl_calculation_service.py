@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 
 from app.models.db_models import Position, PositionSnapshot
-from app.services.market_service import MarketService
+from app.services.market_service import MarketDataService
 
 
 logger = logging.getLogger(__name__)
