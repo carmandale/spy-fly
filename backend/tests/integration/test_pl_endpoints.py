@@ -193,16 +193,15 @@ class TestPLEndpoints:
     
     def test_get_position_pl_history_invalid_hours(self, client):
         """Test history endpoint with invalid hours parameter."""
-        # Hours too high
+        # Hours too high - FastAPI validation returns 422
         response = client.get("/api/v1/positions/1/pl/history?hours=200")
-        assert response.status_code == 400
-        assert "Invalid hours parameter" in response.json()["detail"]
+        assert response.status_code == 422
         
-        # Hours too low
+        # Hours too low - FastAPI validation returns 422
         response = client.get("/api/v1/positions/1/pl/history?hours=0")
-        assert response.status_code == 400
+        assert response.status_code == 422
         
-        # Non-numeric hours
+        # Non-numeric hours - FastAPI validation returns 422
         response = client.get("/api/v1/positions/1/pl/history?hours=abc")
         assert response.status_code == 422
     
