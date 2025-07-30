@@ -1,22 +1,28 @@
 """
-Morning Scan Scheduler Service for SPY-FLY trading system.
+Scheduler Service for SPY-FLY trading system.
 
-This service manages the automated morning scan job that runs at 9:45 AM ET daily
-to scan for trading opportunities and generate spread recommendations.
+This service manages automated jobs including:
+- Morning scan job that runs at 9:45 AM ET daily
+- P/L snapshot job that runs every 15 minutes during market hours
 """
 
 import logging
-from datetime import datetime, time
-from typing import Any
+from datetime import datetime, time, timedelta
+from typing import Any, Optional
+from decimal import Decimal
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
+from sqlalchemy.orm import Session
 
-from app.models.db_models import MorningScanResult
+from app.models.db_models import MorningScanResult, Position, PositionSnapshot
 from app.core.database import get_db
 from app.services.spread_selection_service import SpreadSelectionService
+from app.services.pl_calculation_service import PLCalculationService
+from app.services.websocket_service import WebSocketManager, PLUpdate, PLPositionUpdate
 
 logger = logging.getLogger(__name__)
 
