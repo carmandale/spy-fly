@@ -178,7 +178,7 @@ class TestPLSnapshotScheduling:
         # Verify snapshot captured alert status
         snapshot = scheduler_service.db_session.query(PositionSnapshot).filter_by(position_id=1).first()
         assert snapshot is not None
-        assert snapshot.stop_loss_alert is True
+        assert snapshot.stop_loss_triggered is True
         assert snapshot.unrealized_pl_percent == Decimal("-20.00")
         
         # Verify WebSocket broadcast was called with alert
