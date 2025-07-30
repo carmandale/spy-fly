@@ -71,7 +71,7 @@ class TestWebSocketPLBroadcasting:
     async def test_broadcast_pl_update_message_format(self, websocket_manager):
         """Test that P/L update messages have correct format."""
         # Mock WebSocket connection
-        mock_websocket = Mock()
+        mock_websocket = AsyncMock()
         client_id = "test_client"
         
         # Connect mock client
@@ -123,7 +123,7 @@ class TestWebSocketPLBroadcasting:
     async def test_pl_update_triggered_by_price_change(self, websocket_manager, mock_pl_service):
         """Test that P/L updates are triggered when SPY price changes."""
         # Mock WebSocket connection
-        mock_websocket = Mock()
+        mock_websocket = AsyncMock()
         client_id = "test_client"
         await websocket_manager.connect(mock_websocket, client_id)
         
@@ -168,7 +168,7 @@ class TestWebSocketPLBroadcasting:
     async def test_pl_update_throttling(self, websocket_manager):
         """Test that P/L updates are throttled to prevent spam."""
         # Mock WebSocket connection
-        mock_websocket = Mock()
+        mock_websocket = AsyncMock()
         client_id = "test_client"
         await websocket_manager.connect(mock_websocket, client_id)
         
@@ -205,7 +205,7 @@ class TestWebSocketPLBroadcasting:
     async def test_stop_loss_alert_priority_update(self, websocket_manager):
         """Test that stop-loss alerts bypass throttling."""
         # Mock WebSocket connection
-        mock_websocket = Mock()
+        mock_websocket = AsyncMock()
         client_id = "test_client"
         await websocket_manager.connect(mock_websocket, client_id)
         
@@ -243,7 +243,7 @@ class TestWebSocketPLBroadcasting:
         # Connect multiple mock clients
         clients = []
         for i in range(3):
-            mock_websocket = Mock()
+            mock_websocket = AsyncMock()
             client_id = f"client_{i}"
             await websocket_manager.connect(mock_websocket, client_id)
             clients.append((client_id, mock_websocket))
@@ -280,7 +280,7 @@ class TestWebSocketPLBroadcasting:
     async def test_pl_update_error_handling(self, websocket_manager):
         """Test error handling when P/L updates fail."""
         # Mock WebSocket connection that will fail
-        mock_websocket = Mock()
+        mock_websocket = AsyncMock()
         mock_websocket.send_text.side_effect = Exception("Connection failed")
         client_id = "failing_client"
         
@@ -308,7 +308,7 @@ class TestWebSocketPLBroadcasting:
     async def test_pl_update_integration_with_price_feed(self, websocket_manager, mock_pl_service):
         """Test integration between price feed and P/L updates."""
         # Mock WebSocket connection
-        mock_websocket = Mock()
+        mock_websocket = AsyncMock()
         client_id = "test_client"
         await websocket_manager.connect(mock_websocket, client_id)
         
