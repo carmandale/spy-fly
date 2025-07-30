@@ -79,7 +79,7 @@
 **Next Up:**
 - [x] Trade execution checklist - Generate copy-to-clipboard order details `S` ✅
 - [x] Morning scan scheduler - APScheduler job running at 9:45 ET daily `M` ✅
-- [ ] WebSocket implementation - Real-time price feed to frontend `M`
+- [x] WebSocket implementation - Real-time price feed to frontend `M` ✅
 - [ ] Live P/L calculation - Update spread values every 15 minutes `M`
 - [ ] Alert system - Browser and email notifications for profit/stop targets `L`
 - [ ] Interactive dashboard - Full UI with sentiment gauge, P/L bar, recommendations `L`
