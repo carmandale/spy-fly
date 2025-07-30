@@ -43,7 +43,7 @@ class PLCalculationService:
     STOP_LOSS_TRIGGER_PERCENT = Decimal("-20.00")  # Trigger at -20%
     STOP_LOSS_CLEAR_PERCENT = Decimal("-15.00")    # Clear at -15% (hysteresis)
     
-    def __init__(self, market_service: MarketService, db_session: Session):
+    def __init__(self, market_service: MarketDataService, db_session: Session):
         """Initialize P/L calculation service.
         
         Args:
