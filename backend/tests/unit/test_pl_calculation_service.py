@@ -54,7 +54,8 @@ class TestPLCalculationService:
             max_risk=Decimal("500.00"),
             max_profit=Decimal("250.00"),
             breakeven_price=Decimal("452.50"),
-            status="open"
+            status="open",
+            stop_loss_alert_active=False
         )
     
     def test_calculate_spread_value_with_bid_ask(self, pl_service):
