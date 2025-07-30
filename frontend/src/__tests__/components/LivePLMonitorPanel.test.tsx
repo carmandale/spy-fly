@@ -170,7 +170,7 @@ describe('LivePLMonitorPanel', () => {
     render(<LivePLMonitorPanel plData={lossPLData} historicalData={mockHistoricalData} />)
     
     // Check that loss values have red color classes
-    const lossElement = screen.getByText('-$100')
+    const lossElement = screen.getByText('$-100')
     expect(lossElement).toHaveClass('text-red-400')
     
     const lossPercentElement = screen.getByText('(-20.00%)')
