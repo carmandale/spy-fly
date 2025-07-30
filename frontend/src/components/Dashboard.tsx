@@ -41,23 +41,6 @@ interface SpreadRecommendation {
   expiration: string
 }
 
-interface PLData {
-  currentValue: number
-  entryValue: number
-  unrealizedPL: number
-  unrealizedPLPercent: number
-  timeDecay: number
-  alertStatus: 'none' | 'profit-target' | 'stop-loss'
-}
-
-interface HistoricalData {
-  equityCurve: Array<{
-    date: string
-    value: number
-  }>
-  winRate: number
-  avgProfitLoss: number
-}
 
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
