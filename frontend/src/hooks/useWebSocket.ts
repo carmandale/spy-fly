@@ -52,7 +52,7 @@ export interface UseWebSocketReturn {
   // Connection control
   connect: () => void
   disconnect: () => void
-  sendMessage: (message: any) => void
+  sendMessage: (message: unknown) => void
   
   // Stats
   reconnectAttempts: number
