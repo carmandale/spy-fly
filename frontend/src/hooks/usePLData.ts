@@ -51,9 +51,9 @@ export const usePLData = (): UsePLDataReturn => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchCurrentPL = useCallback(async () => {
+  const fetchCurrentPL = useCallback(async (setLoadingState = true) => {
     try {
-      setLoading(true)
+      if (setLoadingState) setLoading(true)
       setError(null)
       const response = await apiClient.get('/api/v1/positions/pl/current')
       setCurrentPL(response.data)
@@ -62,7 +62,7 @@ export const usePLData = (): UsePLDataReturn => {
       setError(errorMessage)
       setCurrentPL(null)
     } finally {
-      setLoading(false)
+      if (setLoadingState) setLoading(false)
     }
   }, [])
 
@@ -77,8 +77,18 @@ export const usePLData = (): UsePLDataReturn => {
 
   const refresh = useCallback(async () => {
     setLoading(true)
-    await fetchCurrentPL()
-  }, [fetchCurrentPL])
+    try {
+      setError(null)
+      const response = await apiClient.get('/api/v1/positions/pl/current')
+      setCurrentPL(response.data)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+      setError(errorMessage)
+      setCurrentPL(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   const getDerivedMetrics = useCallback((): DerivedMetrics => {
     if (!currentPL || currentPL.positions.length === 0) {
