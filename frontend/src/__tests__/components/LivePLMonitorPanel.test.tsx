@@ -228,7 +228,7 @@ describe('LivePLMonitorPanel', () => {
 
     render(<LivePLMonitorPanel plData={mockPLData} historicalData={negativeHistoricalData} />)
     
-    const avgPLElement = screen.getByText('$-50')
+    const avgPLElement = screen.getByText('$-50').closest('div')
     expect(avgPLElement).toHaveClass('text-red-400')
   })
 
