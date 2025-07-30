@@ -41,7 +41,7 @@ def get_pl_service(db: Session = Depends(get_db)) -> PLCalculationService:
     # Create market data service dependencies
     polygon_client = PolygonClient(api_key=settings.polygon_api_key)
     cache = MarketDataCache()
-    rate_limiter = RateLimiter()
+    rate_limiter = RateLimiter(requests_per_minute=settings.polygon_rate_limit)
     
     market_service = MarketDataService(
         polygon_client=polygon_client,
