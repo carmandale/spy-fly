@@ -1,12 +1,14 @@
 """SQLAlchemy database models for market data storage."""
 
 from sqlalchemy import (
+    Boolean,
     Column,
     Date,
     DateTime,
     ForeignKey,
     Index,
     Integer,
+    JSON,
     Numeric,
     String,
     Text,
