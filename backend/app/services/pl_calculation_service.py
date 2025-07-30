@@ -167,14 +167,31 @@ class PLCalculationService:
         try:
             # Get current SPY price
             spy_quote = await self.market_service.get_spy_quote()
-            spy_price = spy_quote.get('price', Decimal("0"))
+            spy_price = Decimal(str(spy_quote.price))
             
-            # Get option prices
-            long_symbol = f"SPY{position.expiration_date.strftime('%y%m%d')}C{int(position.long_strike * 1000):08d}"
-            short_symbol = f"SPY{position.expiration_date.strftime('%y%m%d')}C{int(position.short_strike * 1000):08d}"
+            # Get option chain for the position's expiration
+            option_chain = await self.market_service.get_spy_options(
+                expiration=position.expiration_date,
+                option_type="call"
+            )
             
-            long_option = await self.market_service.get_option_quote(long_symbol)
-            short_option = await self.market_service.get_option_quote(short_symbol)
+            # Find the specific option contracts
+            long_option = None
+            short_option = None
+            
+            for option in option_chain.options:
+                if option.strike == float(position.long_strike):
+                    long_option = {
+                        'bid': Decimal(str(option.bid)),
+                        'ask': Decimal(str(option.ask)),
+                        'last': Decimal(str(option.last)) if option.last else None
+                    }
+                elif option.strike == float(position.short_strike):
+                    short_option = {
+                        'bid': Decimal(str(option.bid)),
+                        'ask': Decimal(str(option.ask)),
+                        'last': Decimal(str(option.last)) if option.last else None
+                    }
             
             if not long_option or not short_option:
                 logger.warning(f"Missing option prices for position {position.id}")
