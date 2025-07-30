@@ -144,8 +144,12 @@ describe('usePLData', () => {
 
     await result.current.refresh()
 
+    // Wait for the data to update
+    await waitFor(() => {
+      expect(result.current.currentPL?.total_unrealized_pl).toBe(75.0)
+    })
+
     expect(mockApiClient.get).toHaveBeenCalledWith('/api/v1/positions/pl/current')
-    expect(result.current.currentPL?.total_unrealized_pl).toBe(75.0)
   })
 
   it('provides loading state during refresh', async () => {
