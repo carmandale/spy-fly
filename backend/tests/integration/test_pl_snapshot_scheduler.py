@@ -141,18 +141,18 @@ class TestPLSnapshotScheduling:
         # Verify snapshot data for position 1
         snapshot_1 = next(s for s in snapshots if s.position_id == 1)
         assert snapshot_1.spy_price == Decimal("451.25")
-        assert snapshot_1.position_value == Decimal("-190.00")
+        assert snapshot_1.current_value == Decimal("-190.00")
         assert snapshot_1.unrealized_pl == Decimal("60.00")
         assert snapshot_1.unrealized_pl_percent == Decimal("12.00")
-        assert snapshot_1.stop_loss_alert is False
+        assert snapshot_1.stop_loss_triggered is False
         
         # Verify snapshot data for position 2
         snapshot_2 = next(s for s in snapshots if s.position_id == 2)
         assert snapshot_2.spy_price == Decimal("451.25")
-        assert snapshot_2.position_value == Decimal("-110.00")
+        assert snapshot_2.current_value == Decimal("-110.00")
         assert snapshot_2.unrealized_pl == Decimal("40.00")
         assert snapshot_2.unrealized_pl_percent == Decimal("13.33")
-        assert snapshot_2.stop_loss_alert is False
+        assert snapshot_2.stop_loss_triggered is False
     
     @pytest.mark.asyncio
     async def test_pl_snapshot_with_stop_loss_alerts(self, scheduler_service, sample_positions, mock_pl_service):
