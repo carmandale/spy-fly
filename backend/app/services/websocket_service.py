@@ -101,6 +101,7 @@ class WebSocketManager:
         self.market_service = market_service
         self.connections: Dict[str, WebSocketConnection] = {}
         self.price_cache: Dict[str, PriceUpdate] = {}
+        self.pl_cache: PLUpdate | None = None
         self.update_task: asyncio.Task | None = None
         self.is_running = False
         
@@ -109,6 +110,11 @@ class WebSocketManager:
         self.price_change_threshold = 0.01  # minimum change % to trigger update
         self.ping_interval = 30  # seconds between ping/pong
         self.connection_timeout = 60  # seconds before considering connection dead
+        
+        # P/L update configuration
+        self.pl_update_throttle = 5  # seconds between P/L updates (unless alert)
+        self.last_pl_broadcast = datetime.min  # timestamp of last P/L broadcast
+        self.pl_change_threshold = 1.0  # minimum $ change to trigger P/L update
     
     async def connect(self, websocket: WebSocket, client_id: str) -> None:
         """
