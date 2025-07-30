@@ -201,19 +201,51 @@ class TestPLCalculationService:
     
     async def test_calculate_position_pl(self, pl_service, sample_position, mock_market_service):
         """Test complete P/L calculation for a position."""
-        # Mock option prices
-        mock_market_service.get_option_quote = AsyncMock()
-        mock_market_service.get_option_quote.side_effect = [
-            # Long option
-            {'bid': Decimal("3.45"), 'ask': Decimal("3.50"), 'last': Decimal("3.47")},
-            # Short option
-            {'bid': Decimal("0.95"), 'ask': Decimal("1.00"), 'last': Decimal("0.97")}
-        ]
-        
         # Mock SPY price
-        mock_market_service.get_spy_quote = AsyncMock(return_value={
-            'price': Decimal("451.25")
-        })
+        mock_market_service.get_spy_quote = AsyncMock(return_value=QuoteResponse(
+            ticker="SPY",
+            price=451.25,
+            volume=1000000,
+            timestamp="2025-01-30T10:00:00",
+            market_status="regular",
+            cached=False
+        ))
+        
+        # Mock option chain with our specific strikes
+        mock_option_chain = OptionChainResponse(
+            ticker="SPY",
+            underlying_price=451.25,
+            expiration=str(sample_position.expiration_date),
+            options=[
+                OptionContract(
+                    symbol="SPY250130C00450000",
+                    type="call",
+                    strike=450.0,
+                    expiration=str(sample_position.expiration_date),
+                    bid=3.45,
+                    ask=3.50,
+                    mid=3.475,
+                    last=3.47,
+                    volume=1000,
+                    open_interest=5000
+                ),
+                OptionContract(
+                    symbol="SPY250130C00455000",
+                    type="call",
+                    strike=455.0,
+                    expiration=str(sample_position.expiration_date),
+                    bid=0.95,
+                    ask=1.00,
+                    mid=0.975,
+                    last=0.97,
+                    volume=500,
+                    open_interest=2000
+                )
+            ],
+            cached=False
+        )
+        
+        mock_market_service.get_spy_options = AsyncMock(return_value=mock_option_chain)
         
         # Calculate P/L
         result = await pl_service.calculate_position_pl(sample_position)
@@ -229,9 +261,24 @@ class TestPLCalculationService:
     
     async def test_calculate_position_pl_missing_prices(self, pl_service, sample_position, mock_market_service):
         """Test P/L calculation with missing option prices."""
-        # Mock missing prices
-        mock_market_service.get_option_quote = AsyncMock(return_value=None)
-        mock_market_service.get_spy_quote = AsyncMock(return_value={'price': Decimal("451.25")})
+        # Mock SPY price
+        mock_market_service.get_spy_quote = AsyncMock(return_value=QuoteResponse(
+            ticker="SPY",
+            price=451.25,
+            volume=1000000,
+            timestamp="2025-01-30T10:00:00",
+            market_status="regular",
+            cached=False
+        ))
+        
+        # Mock empty option chain (no matching strikes)
+        mock_market_service.get_spy_options = AsyncMock(return_value=OptionChainResponse(
+            ticker="SPY",
+            underlying_price=451.25,
+            expiration=str(sample_position.expiration_date),
+            options=[],  # Empty options list
+            cached=False
+        ))
         
         # Calculate P/L - should return None
         result = await pl_service.calculate_position_pl(sample_position)
@@ -257,23 +304,75 @@ class TestPLCalculationService:
         # Mock database query
         mock_db_session.query().filter().all.return_value = [sample_position, position2]
         
-        # Mock option prices for both positions
-        mock_market_service.get_option_quote = AsyncMock()
-        mock_market_service.get_option_quote.side_effect = [
-            # Position 1 - Long
-            {'bid': Decimal("3.45"), 'ask': Decimal("3.50"), 'last': Decimal("3.47")},
-            # Position 1 - Short
-            {'bid': Decimal("0.95"), 'ask': Decimal("1.00"), 'last': Decimal("0.97")},
-            # Position 2 - Long
-            {'bid': Decimal("1.20"), 'ask': Decimal("1.25"), 'last': Decimal("1.22")},
-            # Position 2 - Short
-            {'bid': Decimal("0.30"), 'ask': Decimal("0.35"), 'last': Decimal("0.32")}
-        ]
-        
         # Mock SPY price
-        mock_market_service.get_spy_quote = AsyncMock(return_value={
-            'price': Decimal("451.25")
-        })
+        mock_market_service.get_spy_quote = AsyncMock(return_value=QuoteResponse(
+            ticker="SPY",
+            price=451.25,
+            volume=1000000,
+            timestamp="2025-01-30T10:00:00",
+            market_status="regular",
+            cached=False
+        ))
+        
+        # Mock option chain with all strikes for both positions
+        mock_market_service.get_spy_options = AsyncMock(return_value=OptionChainResponse(
+            ticker="SPY",
+            underlying_price=451.25,
+            expiration=str(sample_position.expiration_date),
+            options=[
+                # Position 1 strikes
+                OptionContract(
+                    symbol="SPY250130C00450000",
+                    type="call",
+                    strike=450.0,
+                    expiration=str(sample_position.expiration_date),
+                    bid=3.45,
+                    ask=3.50,
+                    mid=3.475,
+                    last=3.47,
+                    volume=1000,
+                    open_interest=5000
+                ),
+                OptionContract(
+                    symbol="SPY250130C00455000",
+                    type="call",
+                    strike=455.0,
+                    expiration=str(sample_position.expiration_date),
+                    bid=0.95,
+                    ask=1.00,
+                    mid=0.975,
+                    last=0.97,
+                    volume=500,
+                    open_interest=2000
+                ),
+                # Position 2 strikes
+                OptionContract(
+                    symbol="SPY250130C00460000",
+                    type="call",
+                    strike=460.0,
+                    expiration=str(position2.expiration_date),
+                    bid=1.20,
+                    ask=1.25,
+                    mid=1.225,
+                    last=1.22,
+                    volume=300,
+                    open_interest=1000
+                ),
+                OptionContract(
+                    symbol="SPY250130C00465000",
+                    type="call",
+                    strike=465.0,
+                    expiration=str(position2.expiration_date),
+                    bid=0.30,
+                    ask=0.35,
+                    mid=0.325,
+                    last=0.32,
+                    volume=200,
+                    open_interest=800
+                )
+            ],
+            cached=False
+        ))
         
         # Calculate P/L for all positions
         results = await pl_service.calculate_all_positions_pl()
@@ -372,11 +471,20 @@ class TestPLCalculationService:
     
     async def test_calculate_position_pl_with_error_handling(self, pl_service, sample_position, mock_market_service):
         """Test P/L calculation handles errors gracefully."""
-        # Mock market service to raise exception
-        mock_market_service.get_option_quote = AsyncMock(
+        # Mock SPY quote to work
+        mock_market_service.get_spy_quote = AsyncMock(return_value=QuoteResponse(
+            ticker="SPY",
+            price=451.25,
+            volume=1000000,
+            timestamp="2025-01-30T10:00:00",
+            market_status="regular",
+            cached=False
+        ))
+        
+        # Mock market service to raise exception on options
+        mock_market_service.get_spy_options = AsyncMock(
             side_effect=Exception("API error")
         )
-        mock_market_service.get_spy_quote = AsyncMock(return_value={'price': Decimal("451.25")})
         
         # Calculate P/L - should return None and not raise
         result = await pl_service.calculate_position_pl(sample_position)
