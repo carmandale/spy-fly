@@ -70,8 +70,8 @@ describe('LivePLMonitorPanel', () => {
 
     render(<LivePLMonitorPanel plData={negativePLData} historicalData={mockHistoricalData} />)
     
-    // Check negative P/L without + prefix
-    expect(screen.getByText('-$30')).toBeInTheDocument()
+    // Check negative P/L with $ prefix
+    expect(screen.getByText('$-30')).toBeInTheDocument()
     expect(screen.getByText('(-6.00%)')).toBeInTheDocument()
   })
 
