@@ -236,7 +236,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
   }, [clearTimers, config.reconnectAttempts])
   
   // Send message to WebSocket
-  const sendMessage = useCallback((message: any) => {
+  const sendMessage = useCallback((message: unknown) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message))
     } else {
