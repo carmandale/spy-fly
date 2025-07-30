@@ -112,6 +112,9 @@ describe('usePLData', () => {
 
   it('handles error when fetching P/L history', async () => {
     const mockApiClient = apiClient as any
+    // Mock initial P/L call to succeed
+    mockApiClient.get.mockResolvedValueOnce({ data: mockPLResponse })
+    // Mock history call to fail
     mockApiClient.get.mockRejectedValueOnce(new Error('History fetch failed'))
 
     const { result } = renderHook(() => usePLData())
