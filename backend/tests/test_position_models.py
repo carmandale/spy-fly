@@ -10,13 +10,13 @@ from decimal import Decimal
 from sqlalchemy.exc import IntegrityError
 
 from app.models.db_models import Position, PositionSnapshot
-from app.core.database import Base, get_session_local
+from app.core.database import Base
 
 
 class TestPositionModel:
     """Test Position model functionality."""
     
-    def test_create_position(self, db_session):
+    def test_create_position(self, test_session):
         """Test creating a new position with all fields."""
         position = Position(
             symbol="SPY",
