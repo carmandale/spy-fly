@@ -15,13 +15,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.5 Run migration and verify schema changes
   - [x] 1.6 Verify all tests pass
 
-- [ ] 2. Implement P/L Calculation Service
-  - [ ] 2.1 Write tests for PLCalculationService class
-  - [ ] 2.2 Create PLCalculationService with position value calculation
-  - [ ] 2.3 Implement unrealized P/L and percentage calculations
-  - [ ] 2.4 Add stop-loss alert detection logic
-  - [ ] 2.5 Implement batch calculation for all positions
-  - [ ] 2.6 Verify all tests pass
+- [x] 2. Implement P/L Calculation Service
+  - [x] 2.1 Write tests for PLCalculationService class
+  - [x] 2.2 Create PLCalculationService with position value calculation
+  - [x] 2.3 Implement unrealized P/L and percentage calculations
+  - [x] 2.4 Add stop-loss alert detection logic
+  - [x] 2.5 Implement batch calculation for all positions
+  - [x] 2.6 Verify all tests pass
 
 - [ ] 3. Create P/L API Endpoints
   - [ ] 3.1 Write tests for P/L API endpoints
