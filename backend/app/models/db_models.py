@@ -279,3 +279,89 @@ class MorningScanResult(Base):
         Index("idx_scan_manual", "is_manual"),
         Index("idx_scan_created_at", "created_at"),
     )
+
+
+class Position(Base):
+    """Track open and closed spread positions for P/L monitoring."""
+    
+    __tablename__ = "positions"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    
+    # Position details
+    symbol = Column(String(10), nullable=False, default="SPY")
+    long_strike = Column(Numeric(10, 2), nullable=False)
+    short_strike = Column(Numeric(10, 2), nullable=False)
+    expiration_date = Column(Date, nullable=False)
+    quantity = Column(Integer, nullable=False)
+    
+    # Entry values
+    entry_value = Column(Numeric(10, 2), nullable=False)  # Net debit/credit
+    max_risk = Column(Numeric(10, 2), nullable=False)
+    max_profit = Column(Numeric(10, 2), nullable=False)
+    breakeven_price = Column(Numeric(10, 4), nullable=False)
+    
+    # Position status
+    status = Column(String(20), nullable=False, default="open")  # open, closed, expired
+    opened_at = Column(DateTime, nullable=False, server_default=func.current_timestamp())
+    closed_at = Column(DateTime)
+    
+    # Latest P/L values (for real-time tracking)
+    latest_value = Column(Numeric(10, 2))
+    latest_unrealized_pl = Column(Numeric(10, 2))
+    latest_unrealized_pl_percent = Column(Numeric(5, 2))
+    latest_update_time = Column(DateTime)
+    
+    # Stop-loss alert tracking
+    stop_loss_alert_active = Column(Boolean, default=False)
+    stop_loss_alert_time = Column(DateTime)
+    
+    # Metadata
+    created_at = Column(DateTime, nullable=False, server_default=func.current_timestamp())
+    updated_at = Column(DateTime, nullable=False, server_default=func.current_timestamp())
+    
+    # Relationship to snapshots
+    snapshots = relationship("PositionSnapshot", back_populates="position")
+    
+    __table_args__ = (
+        Index("idx_position_status", "status"),
+        Index("idx_position_symbol", "symbol"),
+        Index("idx_position_expiration", "expiration_date"),
+        Index("idx_position_opened_at", "opened_at"),
+    )
+
+
+class PositionSnapshot(Base):
+    """Store point-in-time P/L values for open positions."""
+    
+    __tablename__ = "position_snapshots"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    position_id = Column(Integer, ForeignKey("positions.id"), nullable=False)
+    snapshot_time = Column(DateTime, nullable=False)
+    spy_price = Column(Numeric(10, 2), nullable=False)
+    
+    # Current values
+    current_value = Column(Numeric(10, 2), nullable=False)
+    unrealized_pl = Column(Numeric(10, 2), nullable=False)
+    unrealized_pl_percent = Column(Numeric(5, 2), nullable=False)
+    
+    # Individual leg values
+    long_call_bid = Column(Numeric(10, 2))
+    long_call_ask = Column(Numeric(10, 2))
+    short_call_bid = Column(Numeric(10, 2))
+    short_call_ask = Column(Numeric(10, 2))
+    
+    # Risk monitoring
+    risk_percent = Column(Numeric(5, 2), nullable=False)
+    stop_loss_triggered = Column(Boolean, default=False)
+    
+    created_at = Column(DateTime, nullable=False, server_default=func.current_timestamp())
+    
+    # Relationship to position
+    position = relationship("Position", back_populates="snapshots")
+    
+    __table_args__ = (
+        Index("idx_position_time", "position_id", "snapshot_time"),
+        Index("idx_snapshot_time", "snapshot_time"),
+    )
