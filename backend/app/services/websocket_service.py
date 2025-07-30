@@ -46,6 +46,28 @@ class ConnectionInfo(BaseModel):
     timestamp: str
 
 
+class PLPositionUpdate(BaseModel):
+    """Model for individual position P/L data in WebSocket updates."""
+    
+    id: int
+    symbol: str
+    unrealized_pl: float
+    unrealized_pl_percent: float
+    current_value: float
+    stop_loss_alert: bool
+
+
+class PLUpdate(BaseModel):
+    """Model for P/L update messages sent via WebSocket."""
+    
+    type: str = "pl_update"
+    positions: list[PLPositionUpdate]
+    total_unrealized_pl: float
+    spy_price: float
+    timestamp: str
+    alert: bool = False  # True for stop-loss alerts
+
+
 @dataclass
 class WebSocketConnection:
     """Container for WebSocket connection metadata."""
