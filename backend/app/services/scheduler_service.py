@@ -129,7 +129,7 @@ class SchedulerService:
         """Legacy method name - delegates to start()."""
         await self.start()
     
-    async def stop_scheduler(self) -> None:
+    async def stop(self) -> None:
         """Stop the scheduler gracefully."""
         if not self._is_running:
             logger.warning("Scheduler is not running")
@@ -142,6 +142,10 @@ class SchedulerService:
         except Exception as e:
             logger.error(f"Error stopping scheduler: {e}")
             raise
+    
+    async def stop_scheduler(self) -> None:
+        """Legacy method name - delegates to stop()."""
+        await self.stop()
     
     async def trigger_manual_scan(self, account_size: float = 100000.0) -> dict[str, Any]:
         """
