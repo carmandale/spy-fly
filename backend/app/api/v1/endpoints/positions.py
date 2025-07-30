@@ -35,8 +35,11 @@ router = APIRouter()
 
 def get_pl_service(db: Session = Depends(get_db)) -> PLCalculationService:
     """Get P/L calculation service instance."""
+    # Import settings to get API key
+    from app.config import settings
+    
     # Create market data service dependencies
-    polygon_client = PolygonClient()
+    polygon_client = PolygonClient(api_key=settings.polygon_api_key)
     cache = MarketDataCache()
     rate_limiter = RateLimiter()
     
