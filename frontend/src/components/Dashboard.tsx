@@ -81,21 +81,6 @@ const Dashboard: React.FC = () => {
 
   const [spreadRecommendations, setSpreadRecommendations] = useState<SpreadRecommendation[]>([])
 
-  const [plData] = useState<PLData>({
-    currentValue: 0,
-    entryValue: 0,
-    unrealizedPL: 0,
-    unrealizedPLPercent: 0,
-    timeDecay: 0,
-    alertStatus: 'none',
-  })
-
-  const [historicalData] = useState<HistoricalData>({
-    equityCurve: [],
-    winRate: 0,
-    avgProfitLoss: 0,
-  })
-
   // Update market data when WebSocket price updates arrive
   useEffect(() => {
     if (latestPrice && latestPrice.ticker === 'SPY') {
