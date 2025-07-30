@@ -29,20 +29,33 @@ logger = logging.getLogger(__name__)
 
 class SchedulerService:
     """
-    Service for managing scheduled jobs, particularly the morning scan at 9:45 AM ET.
+    Service for managing scheduled jobs.
     
-    This service integrates with the spread selection service to automatically
-    generate trading recommendations at optimal times during market hours.
+    This service manages:
+    - Morning scan at 9:45 AM ET for trading recommendations
+    - P/L snapshots every 15 minutes during market hours
     """
     
-    def __init__(self, spread_selection_service: SpreadSelectionService):
+    def __init__(
+        self, 
+        spread_selection_service: Optional[SpreadSelectionService] = None,
+        db_session: Optional[Session] = None,
+        pl_service: Optional[PLCalculationService] = None,
+        websocket_manager: Optional[WebSocketManager] = None
+    ):
         """
         Initialize the scheduler service.
         
         Args:
             spread_selection_service: Service for generating spread recommendations
+            db_session: Database session for P/L snapshots
+            pl_service: P/L calculation service
+            websocket_manager: WebSocket manager for broadcasting updates
         """
         self.spread_service = spread_selection_service
+        self.db_session = db_session
+        self.pl_service = pl_service
+        self.websocket_manager = websocket_manager
         self.scheduler = None
         self._is_running = False
         
