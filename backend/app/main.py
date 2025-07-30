@@ -1,9 +1,19 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.api import api_router
 from app.config import settings
 from app.core.database import Base, engine
+from app.services.scheduler_service import SchedulerService
+from app.services.spread_selection_service import SpreadSelectionService
+from app.services.black_scholes_calculator import BlackScholesCalculator
+from app.services.market_service import MarketDataService
+from app.services.sentiment_calculator import SentimentCalculator
+
+logger = logging.getLogger(__name__)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
