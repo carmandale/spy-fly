@@ -124,9 +124,6 @@ async def get_position_pl_history(
     Returns:
         P/L history snapshots for the position
     """
-    # Validate hours parameter
-    if hours < 1 or hours > 168:
-        raise HTTPException(status_code=400, detail="Invalid hours parameter. Must be between 1 and 168.")
     
     # Check if position exists
     position = db.query(Position).filter(Position.id == position_id).first()
