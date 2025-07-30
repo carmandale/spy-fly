@@ -385,11 +385,11 @@ class SchedulerService:
                 snapshot = PositionSnapshot(
                     position_id=pl_data.position_id,
                     spy_price=pl_data.spy_price,
-                    position_value=pl_data.current_value,
+                    current_value=pl_data.current_value,
                     unrealized_pl=pl_data.unrealized_pl,
                     unrealized_pl_percent=pl_data.unrealized_pl_percent,
                     stop_loss_alert=pl_data.stop_loss_triggered,
-                    created_at=pl_data.calculation_time
+                    snapshot_time=pl_data.calculation_time
                 )
                 
                 self.db_session.add(snapshot)
