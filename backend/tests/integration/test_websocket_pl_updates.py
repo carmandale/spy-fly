@@ -98,9 +98,10 @@ class TestWebSocketPLBroadcasting:
         # Test broadcasting P/L update
         await websocket_manager.broadcast_pl_update(pl_data)
         
-        # Verify message was sent
-        mock_websocket.send_text.assert_called_once()
-        sent_message = mock_websocket.send_text.call_args[0][0]
+        # Verify P/L message was sent (connection status is also sent)
+        assert mock_websocket.send_text.call_count >= 1
+        # Get the P/L update message (last call)
+        sent_message = mock_websocket.send_text.call_args_list[-1][0][0]
         parsed_message = json.loads(sent_message)
         
         # Verify message structure
