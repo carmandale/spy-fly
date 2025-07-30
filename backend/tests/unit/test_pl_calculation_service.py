@@ -11,6 +11,7 @@ from unittest.mock import Mock, AsyncMock, patch
 
 from app.models.db_models import Position, PositionSnapshot
 from app.services.pl_calculation_service import PLCalculationService, PositionPLData
+from app.models.market import OptionContract, OptionChainResponse, QuoteResponse
 
 
 class TestPLCalculationService:
