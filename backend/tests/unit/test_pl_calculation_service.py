@@ -199,6 +199,7 @@ class TestPLCalculationService:
             current_alert_active=False
         ) is False
     
+    @pytest.mark.asyncio
     async def test_calculate_position_pl(self, pl_service, sample_position, mock_market_service):
         """Test complete P/L calculation for a position."""
         # Mock SPY price
@@ -259,6 +260,7 @@ class TestPLCalculationService:
         assert result.spy_price == Decimal("451.25")
         assert result.stop_loss_triggered is True  # Because -205% < -20%
     
+    @pytest.mark.asyncio
     async def test_calculate_position_pl_missing_prices(self, pl_service, sample_position, mock_market_service):
         """Test P/L calculation with missing option prices."""
         # Mock SPY price
@@ -285,6 +287,7 @@ class TestPLCalculationService:
         
         assert result is None
     
+    @pytest.mark.asyncio
     async def test_calculate_all_positions_pl(self, pl_service, sample_position, mock_db_session, mock_market_service):
         """Test batch P/L calculation for multiple positions."""
         # Create multiple positions
@@ -387,6 +390,7 @@ class TestPLCalculationService:
         assert results[1].unrealized_pl == Decimal("-135.00")  # -285 - (-150)
         assert results[1].unrealized_pl_percent == Decimal("-45.00")  # (-135 / 300) × 100
     
+    @pytest.mark.asyncio
     async def test_update_position_pl_values(self, pl_service, sample_position, mock_db_session):
         """Test updating position with calculated P/L values."""
         # Create P/L data
@@ -415,6 +419,7 @@ class TestPLCalculationService:
         assert sample_position.latest_update_time is not None
         assert sample_position.stop_loss_alert_active is False
     
+    @pytest.mark.asyncio
     async def test_update_position_with_stop_loss_alert(self, pl_service, sample_position, mock_db_session):
         """Test updating position when stop-loss alert triggers."""
         # Create P/L data with stop-loss triggered
@@ -436,6 +441,7 @@ class TestPLCalculationService:
         assert sample_position.stop_loss_alert_active is True
         assert sample_position.stop_loss_alert_time is not None
     
+    @pytest.mark.asyncio
     async def test_create_position_snapshot(self, pl_service, sample_position, mock_db_session):
         """Test creating position snapshot for history tracking."""
         # Create P/L data
@@ -469,6 +475,7 @@ class TestPLCalculationService:
         # Verify snapshot added to session
         mock_db_session.add.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_calculate_position_pl_with_error_handling(self, pl_service, sample_position, mock_market_service):
         """Test P/L calculation handles errors gracefully."""
         # Mock SPY quote to work
