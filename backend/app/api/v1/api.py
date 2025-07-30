@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import health, market, recommendations, scheduler, sentiment, trades, websocket
+from app.api.v1.endpoints import health, market, positions, recommendations, scheduler, sentiment, trades, websocket
 
 api_router = APIRouter()
 
