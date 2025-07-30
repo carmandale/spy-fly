@@ -119,7 +119,7 @@ export const usePLData = (): UsePLDataReturn => {
 
   // Fetch initial data on mount
   useEffect(() => {
-    fetchCurrentPL()
+    fetchCurrentPL(true)
   }, [fetchCurrentPL])
 
   return {
