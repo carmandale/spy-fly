@@ -64,6 +64,20 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'trades'>('dashboard')
 
+  // Initialize WebSocket connection for real-time price updates
+  const {
+    isConnected,
+    isConnecting,
+    connectionError,
+    latestPrice,
+    connect: connectWebSocket,
+    disconnect: disconnectWebSocket
+  } = useWebSocket({
+    autoConnect: true,
+    reconnectAttempts: 5,
+    reconnectInterval: 3000
+  })
+
   const [marketData, setMarketData] = useState<MarketData>({
     spyPrice: 0,
     spyChange: 0,
