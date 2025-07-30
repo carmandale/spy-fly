@@ -242,6 +242,12 @@ class ApiClient {
   async getRecentActivity(limit = 10): Promise<Trade[]> {
     return this.request<Trade[]>(`/api/v1/trades/recent/activity?limit=${limit}`)
   }
+
+  // Generic GET method for flexible API calls
+  async get<T = any>(endpoint: string): Promise<{ data: T }> {
+    const data = await this.request<T>(endpoint)
+    return { data }
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
