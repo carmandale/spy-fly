@@ -18,10 +18,63 @@ logger = logging.getLogger(__name__)
 # Create tables
 Base.metadata.create_all(bind=engine)
 
+# Global scheduler service instance
+scheduler_service: SchedulerService | None = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan manager for startup and shutdown tasks.
+    
+    Handles scheduler initialization and cleanup.
+    """
+    global scheduler_service
+    
+    # Startup
+    try:
+        logger.info("Starting SPY-FLY application...")
+        
+        # Initialize services
+        black_scholes = BlackScholesCalculator()
+        market_service = MarketDataService()
+        sentiment_calculator = SentimentCalculator()
+        
+        spread_service = SpreadSelectionService(
+            black_scholes_calculator=black_scholes,
+            market_service=market_service,
+            sentiment_calculator=sentiment_calculator
+        )
+        
+        # Initialize and start scheduler
+        scheduler_service = SchedulerService(spread_selection_service=spread_service)
+        await scheduler_service.start_scheduler()
+        
+        logger.info("Morning scan scheduler started successfully - next scan at 9:45 AM ET")
+        
+    except Exception as e:
+        logger.error(f"Failed to start scheduler during application startup: {e}")
+        # Don't crash the app if scheduler fails - it can be started manually via API
+    
+    yield
+    
+    # Shutdown
+    try:
+        logger.info("Shutting down SPY-FLY application...")
+        
+        if scheduler_service:
+            await scheduler_service.stop_scheduler()
+            logger.info("Scheduler stopped successfully")
+            
+    except Exception as e:
+        logger.error(f"Error during application shutdown: {e}")
+
+
 app = FastAPI(
     title=settings.project_name,
     version=settings.version,
     openapi_url="/api/v1/openapi.json",
+    lifespan=lifespan
 )
 
 # Set up CORS
