@@ -119,6 +119,7 @@ class TestWebSocketPLBroadcasting:
         assert position["current_value"] == -200.0
         assert position["stop_loss_alert"] is False
     
+    @pytest.mark.asyncio
     async def test_pl_update_triggered_by_price_change(self, websocket_manager, mock_pl_service):
         """Test that P/L updates are triggered when SPY price changes."""
         # Mock WebSocket connection
@@ -163,6 +164,7 @@ class TestWebSocketPLBroadcasting:
         # Verify both price and P/L updates were sent
         assert mock_websocket.send_text.call_count >= 2
     
+    @pytest.mark.asyncio
     async def test_pl_update_throttling(self, websocket_manager):
         """Test that P/L updates are throttled to prevent spam."""
         # Mock WebSocket connection
@@ -199,6 +201,7 @@ class TestWebSocketPLBroadcasting:
         call_count = mock_websocket.send_text.call_count
         assert call_count < 5, "P/L updates should be throttled"
     
+    @pytest.mark.asyncio
     async def test_stop_loss_alert_priority_update(self, websocket_manager):
         """Test that stop-loss alerts bypass throttling."""
         # Mock WebSocket connection
@@ -234,6 +237,7 @@ class TestWebSocketPLBroadcasting:
         assert sent_message.get("alert") is True
         assert sent_message["positions"][0]["stop_loss_alert"] is True
     
+    @pytest.mark.asyncio
     async def test_multiple_clients_pl_broadcast(self, websocket_manager):
         """Test P/L updates are sent to all connected clients."""
         # Connect multiple mock clients
@@ -272,6 +276,7 @@ class TestWebSocketPLBroadcasting:
             assert sent_message["type"] == "pl_update"
             assert sent_message["total_unrealized_pl"] == 75.0
     
+    @pytest.mark.asyncio
     async def test_pl_update_error_handling(self, websocket_manager):
         """Test error handling when P/L updates fail."""
         # Mock WebSocket connection that will fail
@@ -299,6 +304,7 @@ class TestWebSocketPLBroadcasting:
         # Verify failing client was disconnected
         assert client_id not in websocket_manager.connections
     
+    @pytest.mark.asyncio
     async def test_pl_update_integration_with_price_feed(self, websocket_manager, mock_pl_service):
         """Test integration between price feed and P/L updates."""
         # Mock WebSocket connection
