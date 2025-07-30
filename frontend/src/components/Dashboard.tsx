@@ -6,6 +6,7 @@ import RecommendedSpreadsPanel from './RecommendedSpreadsPanel'
 import LivePLMonitorPanel from './LivePLMonitorPanel'
 import { TradeManagementPanel } from './TradeManagementPanel'
 import { apiClient } from '../api/client'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 interface MarketData {
   spyPrice: number
