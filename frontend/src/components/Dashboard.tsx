@@ -255,7 +255,14 @@ const Dashboard: React.FC = () => {
     const loadData = async () => {
       setLoading(true)
       try {
-        await Promise.all([fetchSentiment(), fetchMarketQuote(), fetchOptionsData()])
+        // Load initial data - WebSocket will handle real-time SPY price updates
+        await Promise.all([fetchSentiment(), fetchOptionsData()])
+        
+        // Get initial SPY quote if WebSocket isn't connected yet
+        if (!isConnected) {
+          await fetchMarketQuote()
+        }
+        
         updateMarketSession()
       } catch (error) {
         console.error('Error loading dashboard:', error)
@@ -267,11 +274,16 @@ const Dashboard: React.FC = () => {
 
     loadData()
 
-    // Refresh data every 30 seconds
+    // Refresh sentiment and session data every 30 seconds
+    // SPY price updates now come from WebSocket
     const interval = setInterval(() => {
       fetchSentiment()
-      fetchMarketQuote()
       updateMarketSession()
+      
+      // Only poll SPY price if WebSocket is disconnected
+      if (!isConnected) {
+        fetchMarketQuote()
+      }
     }, 30000)
 
     // Update session status every minute
@@ -281,7 +293,7 @@ const Dashboard: React.FC = () => {
       clearInterval(interval)
       clearInterval(sessionInterval)
     }
-  }, [])
+  }, [isConnected]) // Add isConnected to dependency array
 
   if (loading) {
     return (
