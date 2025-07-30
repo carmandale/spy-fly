@@ -349,3 +349,119 @@ class SchedulerService:
             return morning_scan_job.next_run_time
             
         return None
+    
+    async def calculate_pl_snapshot(self) -> None:
+        """
+        Calculate and store P/L snapshot for all open positions.
+        
+        This job runs every 15 minutes during market hours to capture
+        position values and broadcast updates via WebSocket.
+        """
+        if not self._is_market_hours():
+            logger.debug("Skipping P/L snapshot - outside market hours")
+            return
+        
+        if not self.pl_service or not self.db_session:
+            logger.warning("P/L snapshot skipped - missing required services")
+            return
+        
+        logger.debug("Starting P/L snapshot calculation")
+        
+        try:
+            # Calculate P/L for all positions
+            pl_results = await self.pl_service.calculate_all_positions_pl()
+            
+            if not pl_results:
+                logger.debug("No positions found for P/L snapshot")
+                return
+            
+            # Store snapshots in database
+            snapshots_created = []
+            positions_data = []
+            has_alert = False
+            
+            for pl_data in pl_results:
+                # Create position snapshot
+                snapshot = PositionSnapshot(
+                    position_id=pl_data.position_id,
+                    spy_price=pl_data.spy_price,
+                    position_value=pl_data.current_value,
+                    unrealized_pl=pl_data.unrealized_pl,
+                    unrealized_pl_percent=pl_data.unrealized_pl_percent,
+                    stop_loss_alert=pl_data.stop_loss_triggered,
+                    created_at=pl_data.calculation_time
+                )
+                
+                self.db_session.add(snapshot)
+                snapshots_created.append(snapshot)
+                
+                # Update position with latest values
+                position = self.db_session.query(Position).filter_by(id=pl_data.position_id).first()
+                if position:
+                    position.latest_value = pl_data.current_value
+                    position.latest_unrealized_pl = pl_data.unrealized_pl
+                    position.latest_unrealized_pl_percent = pl_data.unrealized_pl_percent
+                    position.stop_loss_alert_active = pl_data.stop_loss_triggered
+                
+                # Prepare WebSocket data
+                position_update = PLPositionUpdate(
+                    id=pl_data.position_id,
+                    symbol="SPY",
+                    unrealized_pl=float(pl_data.unrealized_pl),
+                    unrealized_pl_percent=float(pl_data.unrealized_pl_percent),
+                    current_value=float(pl_data.current_value),
+                    stop_loss_alert=pl_data.stop_loss_triggered
+                )
+                positions_data.append(position_update)
+                
+                if pl_data.stop_loss_triggered:
+                    has_alert = True
+            
+            # Commit database changes
+            self.db_session.commit()
+            
+            # Broadcast WebSocket update if manager is available
+            if self.websocket_manager and positions_data:
+                total_pl = sum(float(pl.unrealized_pl) for pl in pl_results)
+                spy_price = float(pl_results[0].spy_price) if pl_results else 0.0
+                
+                pl_update = PLUpdate(
+                    positions=positions_data,
+                    total_unrealized_pl=total_pl,
+                    spy_price=spy_price,
+                    timestamp=datetime.now().isoformat() + "Z",
+                    alert=has_alert
+                )
+                
+                await self.websocket_manager.broadcast_pl_update(pl_update)
+            
+            logger.info(f"P/L snapshot completed - {len(snapshots_created)} snapshots created")
+            
+            if has_alert:
+                logger.warning("Stop-loss alerts detected in P/L snapshot")
+        
+        except Exception as e:
+            logger.error(f"Error in P/L snapshot calculation: {e}")
+            # Rollback any partial database changes
+            if self.db_session:
+                self.db_session.rollback()
+    
+    def _is_market_hours(self) -> bool:
+        """
+        Check if current time is during regular market hours (9:30 AM - 4:00 PM ET).
+        
+        Returns:
+            True if during market hours, False otherwise
+        """
+        now = datetime.now()
+        
+        # Check if it's a weekday (Monday = 0, Sunday = 6)
+        if now.weekday() > 4:  # Saturday or Sunday
+            return False
+        
+        # Get current time in ET
+        current_time = now.time()
+        market_open = time(9, 30)  # 9:30 AM ET
+        market_close = time(16, 0)  # 4:00 PM ET
+        
+        return market_open <= current_time <= market_close
