@@ -67,6 +67,7 @@ class TestWebSocketPLBroadcasting:
         db.commit()
         return position
     
+    @pytest.mark.asyncio
     async def test_broadcast_pl_update_message_format(self, websocket_manager):
         """Test that P/L update messages have correct format."""
         # Mock WebSocket connection
