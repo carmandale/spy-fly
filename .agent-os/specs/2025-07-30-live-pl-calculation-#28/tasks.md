@@ -23,13 +23,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 2.5 Implement batch calculation for all positions
   - [x] 2.6 Verify all tests pass
 
-- [ ] 3. Create P/L API Endpoints
-  - [ ] 3.1 Write tests for P/L API endpoints
-  - [ ] 3.2 Implement GET /api/v1/positions/pl/current endpoint
-  - [ ] 3.3 Implement GET /api/v1/positions/{id}/pl/history endpoint
-  - [ ] 3.4 Implement POST /api/v1/positions/pl/calculate endpoint
-  - [ ] 3.5 Add API documentation
-  - [ ] 3.6 Verify all tests pass
+- [x] 3. Create P/L API Endpoints
+  - [x] 3.1 Write tests for P/L API endpoints
+  - [x] 3.2 Implement GET /api/v1/positions/pl/current endpoint
+  - [x] 3.3 Implement GET /api/v1/positions/{id}/pl/history endpoint
+  - [x] 3.4 Implement POST /api/v1/positions/pl/calculate endpoint
+  - [x] 3.5 Add API documentation
+  - [x] 3.6 Verify all tests pass
 
 - [ ] 4. Integrate WebSocket P/L Updates
   - [ ] 4.1 Write tests for WebSocket P/L broadcasting
