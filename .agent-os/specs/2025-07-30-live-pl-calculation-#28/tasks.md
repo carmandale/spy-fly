@@ -49,7 +49,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 - [ ] 6. Create Frontend P/L Components
   - [x] 6.1 Write tests for P/L display components
-  - [ ] 6.2 Create PLDisplay component for current P/L
+  - [x] 6.2 Create PLDisplay component for current P/L
   - [ ] 6.3 Implement PLHistory chart component
   - [ ] 6.4 Add stop-loss alert indicators
   - [ ] 6.5 Integrate WebSocket pl_update handling
