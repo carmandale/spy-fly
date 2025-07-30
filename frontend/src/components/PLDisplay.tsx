@@ -82,7 +82,7 @@ const PLDisplay: React.FC<PLDisplayProps> = ({ className }) => {
 
   // Transform data for LivePLMonitorPanel
   const plData = transformPLData(currentPL)
-  const historicalData = transformHistoricalData(currentPL)
+  const historicalData = transformHistoricalData()
 
   return (
     <LivePLMonitorPanel 
