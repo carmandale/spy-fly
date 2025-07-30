@@ -130,6 +130,7 @@ describe('usePLData', () => {
 
   it('refreshes current P/L data', async () => {
     const mockApiClient = apiClient as any
+    // Mock initial P/L call
     mockApiClient.get.mockResolvedValueOnce({ data: mockPLResponse })
 
     const { result } = renderHook(() => usePLData())
@@ -138,8 +139,7 @@ describe('usePLData', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    // Clear the mock to test refresh
-    mockApiClient.get.mockClear()
+    // Mock refresh call with updated data
     mockApiClient.get.mockResolvedValueOnce({ data: { ...mockPLResponse, total_unrealized_pl: 75.0 } })
 
     await result.current.refresh()
