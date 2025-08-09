@@ -583,3 +583,94 @@ class WebSocketManager:
                 for conn in self.connections.values()
             ]
         }
+
+
+class WebSocketService:
+    """
+    High-level WebSocket service for broadcasting position and trade events.
+    
+    This service provides a simplified interface for sending WebSocket notifications
+    related to position changes, trade execution, and other trading events.
+    """
+    
+    def __init__(self, websocket_manager: WebSocketManager | None = None):
+        """
+        Initialize WebSocket service.
+        
+        Args:
+            websocket_manager: Optional WebSocket manager instance
+        """
+        self.websocket_manager = websocket_manager
+    
+    async def broadcast_position_event(self, event_data: Dict[str, Any]) -> None:
+        """
+        Broadcast a position-related event to all connected clients.
+        
+        Args:
+            event_data: Dictionary containing event information
+        """
+        try:
+            # Get the global websocket manager if not provided
+            if self.websocket_manager is None:
+                from app.api.v1.endpoints.websocket import get_websocket_manager
+                self.websocket_manager = get_websocket_manager()
+            
+            # Convert event data to appropriate WebSocket message format
+            if event_data.get("type") in ["position_created", "position_updated", "position_closed"]:
+                # Create a PLUpdate message for position events
+                pl_update = PLUpdate(
+                    position_id=event_data.get("position_id", 0),
+                    symbol=event_data.get("symbol", "SPY"),
+                    contracts=event_data.get("contracts", 1),
+                    unrealized_pnl=event_data.get("realized_pnl", 0.0) or 0.0,
+                    unrealized_pnl_percent=0.0,  # Will be calculated by P/L service
+                    current_total_value=event_data.get("entry_total_cost", 0.0) or 0.0,
+                    entry_total_cost=event_data.get("entry_total_cost", 0.0) or 0.0,
+                    current_spy_price=0.0,  # Will be updated by market service
+                    market_session="regular",
+                    timestamp=event_data.get("timestamp", datetime.now().isoformat()),
+                    alert_triggered=event_data.get("type") == "position_closed",
+                    alert_type="position_closed" if event_data.get("type") == "position_closed" else None,
+                    alert_message=f"Position {event_data.get('position_id')} {event_data.get('type', 'updated').replace('_', ' ')}"
+                )
+                
+                # Broadcast the position update
+                await self.websocket_manager.broadcast_position_pl_update(pl_update)
+                
+                logger.debug(f"Broadcasted position event: {event_data.get('type')} for position {event_data.get('position_id')}")
+            
+        except Exception as e:
+            logger.warning(f"Failed to broadcast position event: {str(e)}")
+            # Don't raise - WebSocket failures shouldn't break the main workflow
+    
+    async def broadcast_trade_event(self, event_data: Dict[str, Any]) -> None:
+        """
+        Broadcast a trade-related event to all connected clients.
+        
+        Args:
+            event_data: Dictionary containing trade event information
+        """
+        try:
+            # Get the global websocket manager if not provided
+            if self.websocket_manager is None:
+                from app.api.v1.endpoints.websocket import get_websocket_manager
+                self.websocket_manager = get_websocket_manager()
+            
+            # For now, trade events can be sent as connection info messages
+            # In the future, we might want to create a specific TradeEvent model
+            connection_info = ConnectionInfo(
+                type="trade_event",
+                status=event_data.get("status", "info"),
+                message=f"Trade {event_data.get('trade_id')} {event_data.get('event_type', 'updated')}",
+                timestamp=event_data.get("timestamp", datetime.now().isoformat())
+            )
+            
+            # Broadcast to all connected clients
+            for client_id in self.websocket_manager.connections:
+                await self.websocket_manager._send_to_client(client_id, connection_info)
+            
+            logger.debug(f"Broadcasted trade event: {event_data.get('event_type')} for trade {event_data.get('trade_id')}")
+            
+        except Exception as e:
+            logger.warning(f"Failed to broadcast trade event: {str(e)}")
+            # Don't raise - WebSocket failures shouldn't break the main workflow

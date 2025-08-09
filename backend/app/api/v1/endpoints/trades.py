@@ -1,9 +1,11 @@
 """Trade management API endpoints."""
 
+import logging
 from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.deps import get_db
 from app.models.trading import Trade, TradeSpread
@@ -15,6 +17,12 @@ from app.schemas.trades import (
     TradeUpdate,
     TradeWithSpread,
 )
+from app.services.trade_position_integration_service import (
+    TradePositionIntegrationService,
+    TradePositionIntegrationError
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -123,79 +131,152 @@ async def get_trade(trade_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=TradeResponse)
 async def create_trade(trade_data: TradeCreate, db: Session = Depends(get_db)):
-    """Create a new trade."""
-    # Create the trade
-    trade = Trade(
-        trade_date=trade_data.trade_date,
-        trade_type=trade_data.trade_type,
-        status=trade_data.status,
-        entry_time=trade_data.entry_time,
-        entry_sentiment_score_id=trade_data.entry_sentiment_score_id,
-        entry_signal_reason=trade_data.entry_signal_reason,
-        contracts=trade_data.contracts,
-        max_risk=trade_data.max_risk,
-        max_reward=trade_data.max_reward,
-        probability_of_profit=trade_data.probability_of_profit,
-        notes=trade_data.notes,
-    )
-
-    db.add(trade)
-    db.flush()  # Get the trade ID
-
-    # Create the associated spread if provided
-    if trade_data.spread:
-        spread = TradeSpread(
-            trade_id=trade.id,
-            spread_type=trade_data.spread.spread_type,
-            expiration_date=trade_data.spread.expiration_date,
-            long_strike=trade_data.spread.long_strike,
-            long_premium=trade_data.spread.long_premium,
-            long_iv=trade_data.spread.long_iv,
-            long_delta=trade_data.spread.long_delta,
-            long_gamma=trade_data.spread.long_gamma,
-            long_theta=trade_data.spread.long_theta,
-            short_strike=trade_data.spread.short_strike,
-            short_premium=trade_data.spread.short_premium,
-            short_iv=trade_data.spread.short_iv,
-            short_delta=trade_data.spread.short_delta,
-            short_gamma=trade_data.spread.short_gamma,
-            short_theta=trade_data.spread.short_theta,
-            net_debit=trade_data.spread.net_debit,
-            max_profit=trade_data.spread.max_profit,
-            max_loss=trade_data.spread.max_loss,
-            breakeven=trade_data.spread.breakeven,
-            risk_reward_ratio=trade_data.spread.risk_reward_ratio,
+    """Create a new trade with automatic position tracking integration."""
+    try:
+        # Start database transaction
+        db.begin()
+        
+        # Create the trade
+        trade = Trade(
+            trade_date=trade_data.trade_date,
+            trade_type=trade_data.trade_type,
+            status=trade_data.status,
+            entry_time=trade_data.entry_time,
+            entry_sentiment_score_id=trade_data.entry_sentiment_score_id,
+            entry_signal_reason=trade_data.entry_signal_reason,
+            contracts=trade_data.contracts,
+            max_risk=trade_data.max_risk,
+            max_reward=trade_data.max_reward,
+            probability_of_profit=trade_data.probability_of_profit,
+            notes=trade_data.notes,
         )
-        db.add(spread)
 
-    db.commit()
-    db.refresh(trade)
+        db.add(trade)
+        db.flush()  # Get the trade ID
 
-    return TradeResponse.model_validate(trade)
+        # Create the associated spread if provided
+        if trade_data.spread:
+            spread = TradeSpread(
+                trade_id=trade.id,
+                spread_type=trade_data.spread.spread_type,
+                expiration_date=trade_data.spread.expiration_date,
+                long_strike=trade_data.spread.long_strike,
+                long_premium=trade_data.spread.long_premium,
+                long_iv=trade_data.spread.long_iv,
+                long_delta=trade_data.spread.long_delta,
+                long_gamma=trade_data.spread.long_gamma,
+                long_theta=trade_data.spread.long_theta,
+                short_strike=trade_data.spread.short_strike,
+                short_premium=trade_data.spread.short_premium,
+                short_iv=trade_data.spread.short_iv,
+                short_delta=trade_data.spread.short_delta,
+                short_gamma=trade_data.spread.short_gamma,
+                short_theta=trade_data.spread.short_theta,
+                net_debit=trade_data.spread.net_debit,
+                max_profit=trade_data.spread.max_profit,
+                max_loss=trade_data.spread.max_loss,
+                breakeven=trade_data.spread.breakeven,
+                risk_reward_ratio=trade_data.spread.risk_reward_ratio,
+            )
+            db.add(spread)
+            db.flush()  # Ensure spread is available for position creation
+
+        # Integrate with position tracking system
+        integration_service = TradePositionIntegrationService(db)
+        integration_result = await integration_service.handle_trade_creation(trade)
+        
+        # Commit the transaction
+        db.commit()
+        db.refresh(trade)
+        
+        logger.info(f"Successfully created trade {trade.id} with integration result: {integration_result}")
+        
+        return TradeResponse.model_validate(trade)
+        
+    except TradePositionIntegrationError as e:
+        logger.error(f"Trade-position integration failed: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Trade creation failed due to position integration error: {str(e)}"
+        )
+    except SQLAlchemyError as e:
+        logger.error(f"Database error during trade creation: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Trade creation failed due to database error"
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error during trade creation: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Trade creation failed due to unexpected error"
+        )
 
 
 @router.put("/{trade_id}", response_model=TradeResponse)
 async def update_trade(
     trade_id: int, trade_data: TradeUpdate, db: Session = Depends(get_db)
 ):
-    """Update an existing trade."""
-    trade = db.query(Trade).filter(Trade.id == trade_id).first()
-    if not trade:
-        raise HTTPException(status_code=404, detail="Trade not found")
+    """Update an existing trade with position lifecycle management."""
+    try:
+        # Start database transaction
+        db.begin()
+        
+        trade = db.query(Trade).filter(Trade.id == trade_id).first()
+        if not trade:
+            raise HTTPException(status_code=404, detail="Trade not found")
 
-    # Update trade fields
-    update_data = trade_data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        if hasattr(trade, field):
-            setattr(trade, field, value)
+        # Store original status for comparison
+        original_status = trade.status
 
-    # Update timestamp
-    trade.updated_at = datetime.utcnow()
+        # Update trade fields
+        update_data = trade_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            if hasattr(trade, field):
+                setattr(trade, field, value)
 
-    db.commit()
-    db.refresh(trade)
+        # Update timestamp
+        trade.updated_at = datetime.utcnow()
+        
+        # Handle position integration if status changed
+        integration_result = None
+        if trade.status != original_status:
+            integration_service = TradePositionIntegrationService(db)
+            integration_result = await integration_service.handle_trade_update(trade)
+            
+            logger.info(f"Trade {trade_id} status changed from {original_status} to {trade.status}")
+            logger.info(f"Position integration result: {integration_result}")
 
-    return TradeResponse.model_validate(trade)
+        # Commit the transaction
+        db.commit()
+        db.refresh(trade)
+        
+        return TradeResponse.model_validate(trade)
+        
+    except TradePositionIntegrationError as e:
+        logger.error(f"Trade-position integration failed for trade {trade_id}: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Trade update failed due to position integration error: {str(e)}"
+        )
+    except SQLAlchemyError as e:
+        logger.error(f"Database error during trade update: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Trade update failed due to database error"
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error during trade update: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Trade update failed due to unexpected error"
+        )
 
 
 @router.delete("/{trade_id}")
