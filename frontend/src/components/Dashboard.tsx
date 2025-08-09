@@ -41,23 +41,7 @@ interface SpreadRecommendation {
   expiration: string
 }
 
-interface PLData {
-  currentValue: number
-  entryValue: number
-  unrealizedPL: number
-  unrealizedPLPercent: number
-  timeDecay: number
-  alertStatus: 'none' | 'profit-target' | 'stop-loss'
-}
 
-interface HistoricalData {
-  equityCurve: Array<{
-    date: string
-    value: number
-  }>
-  winRate: number
-  avgProfitLoss: number
-}
 
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
@@ -69,7 +53,8 @@ const Dashboard: React.FC = () => {
     isConnected,
     isConnecting,
     connectionError,
-    latestPrice
+    latestPrice,
+    latestPortfolioPL
   } = useWebSocket({
     autoConnect: true,
     reconnectAttempts: 5,
@@ -97,21 +82,6 @@ const Dashboard: React.FC = () => {
   })
 
   const [spreadRecommendations, setSpreadRecommendations] = useState<SpreadRecommendation[]>([])
-
-  const [plData] = useState<PLData>({
-    currentValue: 0,
-    entryValue: 0,
-    unrealizedPL: 0,
-    unrealizedPLPercent: 0,
-    timeDecay: 0,
-    alertStatus: 'none',
-  })
-
-  const [historicalData] = useState<HistoricalData>({
-    equityCurve: [],
-    winRate: 0,
-    avgProfitLoss: 0,
-  })
 
   // Update market data when WebSocket price updates arrive
   useEffect(() => {
@@ -358,7 +328,7 @@ const Dashboard: React.FC = () => {
 
               {/* Live P/L Monitor */}
               <div className="lg:col-span-1">
-                <LivePLMonitorPanel plData={plData} historicalData={historicalData} />
+                <LivePLMonitorPanel portfolioPLUpdate={latestPortfolioPL} />
               </div>
 
               {/* Recommended Spreads - Full width on smaller screens */}
