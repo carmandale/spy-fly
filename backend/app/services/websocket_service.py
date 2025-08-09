@@ -9,13 +9,14 @@ import json
 import logging
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Set
 from dataclasses import dataclass
 
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from app.services.market_service import MarketDataService
+from app.services.pl_calculation_service import PLCalculationService
 from app.core.exceptions import MarketDataError
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,49 @@ class ConnectionInfo(BaseModel):
     timestamp: str
 
 
+class PLUpdate(BaseModel):
+    """Model for P/L update messages sent via WebSocket."""
+    
+    type: str = "pl_update"
+    position_id: int
+    symbol: str
+    contracts: int
+    
+    # Current P/L data
+    unrealized_pnl: float
+    unrealized_pnl_percent: float
+    current_total_value: float
+    entry_total_cost: float
+    
+    # Greeks and risk metrics
+    position_delta: float | None = None
+    position_theta: float | None = None
+    daily_theta_decay: float | None = None
+    
+    # Alert information
+    alert_triggered: bool = False
+    alert_type: str | None = None
+    alert_message: str | None = None
+    
+    # Market data
+    current_spy_price: float
+    market_session: str
+    timestamp: str
+
+
+class PortfolioPLUpdate(BaseModel):
+    """Model for portfolio-level P/L update messages."""
+    
+    type: str = "portfolio_pl_update"
+    total_positions: int
+    total_unrealized_pnl: float
+    total_unrealized_pnl_percent: float
+    total_daily_theta: float
+    current_spy_price: float
+    timestamp: str
+    positions: List[Dict] = []
+
+
 @dataclass
 class WebSocketConnection:
     """Container for WebSocket connection metadata."""
@@ -69,16 +113,23 @@ class WebSocketManager:
     and connection lifecycle management.
     """
     
-    def __init__(self, market_service: MarketDataService):
+    def __init__(
+        self, 
+        market_service: MarketDataService,
+        pl_calculation_service: PLCalculationService | None = None
+    ):
         """
         Initialize WebSocket manager.
         
         Args:
             market_service: Service for fetching market data
+            pl_calculation_service: Service for P/L calculations (optional)
         """
         self.market_service = market_service
+        self.pl_calculation_service = pl_calculation_service
         self.connections: Dict[str, WebSocketConnection] = {}
         self.price_cache: Dict[str, PriceUpdate] = {}
+        self.pl_cache: Dict[str, PortfolioPLUpdate] = {}
         self.update_task: asyncio.Task | None = None
         self.is_running = False
         
@@ -87,6 +138,7 @@ class WebSocketManager:
         self.price_change_threshold = 0.01  # minimum change % to trigger update
         self.ping_interval = 30  # seconds between ping/pong
         self.connection_timeout = 60  # seconds before considering connection dead
+        self.pl_update_enabled = pl_calculation_service is not None
     
     async def connect(self, websocket: WebSocket, client_id: str) -> None:
         """
@@ -117,6 +169,10 @@ class WebSocketManager:
         # Send current price if available
         if "SPY" in self.price_cache:
             await self._send_to_client(client_id, self.price_cache["SPY"])
+        
+        # Send current P/L if available
+        if "portfolio" in self.pl_cache:
+            await self._send_to_client(client_id, self.pl_cache["portfolio"])
         
         # Start update task if not running
         if not self.is_running:
@@ -161,6 +217,61 @@ class WebSocketManager:
                 disconnected_clients.append(client_id)
             except Exception as e:
                 logger.error(f"Error sending to client {client_id}: {e}")
+                disconnected_clients.append(client_id)
+        
+        # Clean up disconnected clients
+        for client_id in disconnected_clients:
+            await self.disconnect(client_id)
+    
+    async def broadcast_pl_update(self, pl_data: PortfolioPLUpdate) -> None:
+        """
+        Broadcast P/L update to all connected clients.
+        
+        Args:
+            pl_data: Portfolio P/L data to broadcast
+        """
+        if not self.connections or not self.pl_update_enabled:
+            return
+        
+        # Cache the update
+        self.pl_cache["portfolio"] = pl_data
+        
+        # Broadcast to all connections
+        disconnected_clients = []
+        
+        for client_id in list(self.connections.keys()):
+            try:
+                await self._send_to_client(client_id, pl_data)
+            except WebSocketDisconnect:
+                disconnected_clients.append(client_id)
+            except Exception as e:
+                logger.error(f"Error sending P/L update to client {client_id}: {e}")
+                disconnected_clients.append(client_id)
+        
+        # Clean up disconnected clients
+        for client_id in disconnected_clients:
+            await self.disconnect(client_id)
+    
+    async def broadcast_position_pl_update(self, position_pl_data: PLUpdate) -> None:
+        """
+        Broadcast individual position P/L update to all connected clients.
+        
+        Args:
+            position_pl_data: Individual position P/L data to broadcast
+        """
+        if not self.connections or not self.pl_update_enabled:
+            return
+        
+        # Broadcast to all connections
+        disconnected_clients = []
+        
+        for client_id in list(self.connections.keys()):
+            try:
+                await self._send_to_client(client_id, position_pl_data)
+            except WebSocketDisconnect:
+                disconnected_clients.append(client_id)
+            except Exception as e:
+                logger.error(f"Error sending position P/L update to client {client_id}: {e}")
                 disconnected_clients.append(client_id)
         
         # Clean up disconnected clients
@@ -249,6 +360,10 @@ class WebSocketManager:
                     await self.broadcast_price_update("SPY", price_update)
                     logger.debug(f"Broadcasted SPY price update: ${price_update.price}")
                 
+                # Calculate and broadcast P/L updates if service is available
+                if self.pl_calculation_service and should_broadcast:
+                    await self._calculate_and_broadcast_pl_updates(price_update.price)
+                
             except MarketDataError as e:
                 logger.warning(f"Market data error in WebSocket loop: {e}")
                 # Send error notification to clients
@@ -271,6 +386,65 @@ class WebSocketManager:
             await asyncio.sleep(self.update_interval)
         
         logger.info("WebSocket price update loop ended")
+    
+    async def _calculate_and_broadcast_pl_updates(self, current_spy_price: float) -> None:
+        """
+        Calculate P/L for all open positions and broadcast updates.
+        
+        Args:
+            current_spy_price: Current SPY price for calculations
+        """
+        try:
+            # Calculate portfolio P/L
+            portfolio_pl = await self.pl_calculation_service.calculate_portfolio_pl()
+            
+            if portfolio_pl["total_positions"] > 0:
+                # Create portfolio P/L update message
+                portfolio_update = PortfolioPLUpdate(
+                    total_positions=portfolio_pl["total_positions"],
+                    total_unrealized_pnl=portfolio_pl["total_unrealized_pnl"],
+                    total_unrealized_pnl_percent=portfolio_pl["total_unrealized_pnl_percent"],
+                    total_daily_theta=portfolio_pl["total_daily_theta"],
+                    current_spy_price=current_spy_price,
+                    timestamp=datetime.now().isoformat(),
+                    positions=portfolio_pl["positions"]
+                )
+                
+                # Check if we should broadcast this P/L update
+                should_broadcast_pl = self._should_broadcast_pl_update(portfolio_update)
+                
+                if should_broadcast_pl:
+                    await self.broadcast_pl_update(portfolio_update)
+                    logger.debug(f"Broadcasted portfolio P/L update: ${portfolio_pl['total_unrealized_pnl']:.2f}")
+                
+                # Broadcast individual position updates for positions with alerts
+                for position_data in portfolio_pl["positions"]:
+                    if position_data.get("alert_triggered", False):
+                        position_update = PLUpdate(
+                            position_id=position_data["position_id"],
+                            symbol=position_data["symbol"],
+                            contracts=position_data["contracts"],
+                            unrealized_pnl=position_data["unrealized_pnl"],
+                            unrealized_pnl_percent=position_data["unrealized_pnl_percent"],
+                            current_total_value=position_data["current_total_value"],
+                            entry_total_cost=position_data["entry_total_cost"],
+                            position_delta=position_data.get("position_delta"),
+                            position_theta=position_data.get("position_theta"),
+                            daily_theta_decay=position_data.get("daily_theta_decay"),
+                            alert_triggered=position_data["alert_triggered"],
+                            alert_type=position_data.get("alert_type"),
+                            alert_message=position_data.get("alert_message"),
+                            current_spy_price=current_spy_price,
+                            market_session=position_data.get("market_session", "regular"),
+                            timestamp=datetime.now().isoformat()
+                        )
+                        
+                        await self.broadcast_position_pl_update(position_update)
+                        logger.info(f"Broadcasted alert for position {position_data['position_id']}: {position_data.get('alert_message')}")
+        
+        except Exception as e:
+            logger.error(f"Error calculating P/L updates: {e}")
+            # Don't raise - we don't want P/L errors to break price updates
     
     def _should_broadcast_update(self, ticker: str, new_update: PriceUpdate) -> bool:
         """
@@ -307,6 +481,49 @@ class WebSocketManager:
             except ValueError:
                 # If timestamp parsing fails, broadcast anyway
                 return True
+        
+        return False
+    
+    def _should_broadcast_pl_update(self, new_pl_update: PortfolioPLUpdate) -> bool:
+        """
+        Determine if a P/L update should be broadcasted.
+        
+        Args:
+            new_pl_update: New P/L update data
+            
+        Returns:
+            True if update should be broadcasted, False otherwise
+        """
+        # Always broadcast first P/L update
+        if "portfolio" not in self.pl_cache:
+            return True
+        
+        cached_pl_update = self.pl_cache["portfolio"]
+        
+        # Broadcast if total P/L changed significantly (more than $10 or 1%)
+        pnl_change = abs(new_pl_update.total_unrealized_pnl - cached_pl_update.total_unrealized_pnl)
+        pnl_percent_change = abs(new_pl_update.total_unrealized_pnl_percent - cached_pl_update.total_unrealized_pnl_percent)
+        
+        if pnl_change >= 10.0 or pnl_percent_change >= 1.0:
+            return True
+        
+        # Broadcast if number of positions changed
+        if new_pl_update.total_positions != cached_pl_update.total_positions:
+            return True
+        
+        # Broadcast if any position has alerts
+        for position in new_pl_update.positions:
+            if position.get("alert_triggered", False):
+                return True
+        
+        # Broadcast every 5 minutes during market hours regardless
+        try:
+            time_since_last = datetime.now() - datetime.fromisoformat(cached_pl_update.timestamp.replace('Z', '+00:00'))
+            if time_since_last.total_seconds() >= 300:  # 5 minutes
+                return True
+        except ValueError:
+            # If timestamp parsing fails, broadcast anyway
+            return True
         
         return False
     
