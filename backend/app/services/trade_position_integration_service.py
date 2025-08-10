@@ -27,6 +27,17 @@ from app.core.exceptions import ServiceError
 logger = logging.getLogger(__name__)
 
 
+def _create_market_service() -> MarketDataService:
+    """Create a properly initialized MarketDataService."""
+    polygon_client = PolygonClient(
+        api_key=settings.polygon_api_key, 
+        use_sandbox=settings.polygon_use_sandbox
+    )
+    cache = MarketDataCache(max_size=1000)
+    rate_limiter = RateLimiter(requests_per_minute=settings.polygon_rate_limit)
+    return MarketDataService(polygon_client, cache, rate_limiter)
+
+
 class TradePositionIntegrationError(ServiceError):
     """Exception raised for trade-position integration errors."""
     pass
