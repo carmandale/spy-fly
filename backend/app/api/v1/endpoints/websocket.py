@@ -2,19 +2,26 @@
 WebSocket API endpoints for real-time price feeds and market data.
 """
 
-import uuid
 import logging
+import uuid
 from typing import Any
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from pydantic import BaseModel
 
-from app.services.websocket_service import WebSocketManager
+from app.config import settings
+from app.services.cache import MarketDataCache
 from app.services.market_service import MarketDataService
 from app.services.polygon_client import PolygonClient
-from app.services.cache import MarketDataCache
 from app.services.rate_limiter import RateLimiter
-from app.config import settings
+from app.services.websocket_service import WebSocketManager
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +33,7 @@ websocket_manager: WebSocketManager | None = None
 
 class WebSocketStatsResponse(BaseModel):
     """Response model for WebSocket connection statistics."""
-    
+
     total_connections: int
     is_running: bool
     update_interval: int
@@ -42,7 +49,7 @@ def get_websocket_manager() -> WebSocketManager:
         WebSocketManager instance
     """
     global websocket_manager
-    
+
     if websocket_manager is None:
         # Create dependencies for market service with proper initialization
         polygon_client = PolygonClient(
@@ -51,16 +58,16 @@ def get_websocket_manager() -> WebSocketManager:
         )
         cache = MarketDataCache(max_size=1000)
         rate_limiter = RateLimiter(requests_per_minute=settings.polygon_rate_limit)
-        
+
         market_service = MarketDataService(
             polygon_client=polygon_client,
             cache=cache,
             rate_limiter=rate_limiter
         )
-        
+
         websocket_manager = WebSocketManager(market_service=market_service)
         logger.info("WebSocket manager initialized")
-    
+
     return websocket_manager
 
 
@@ -91,20 +98,20 @@ async def websocket_price_feed(
     """
     # Generate unique client ID
     client_id = f"client_{uuid.uuid4().hex[:8]}"
-    
+
     logger.info(f"WebSocket connection attempt from client {client_id}")
-    
+
     try:
         # Accept connection and register with manager
         await manager.connect(websocket, client_id)
-        
+
         # Handle incoming messages
         while True:
             try:
                 # Wait for message from client
                 message = await websocket.receive_text()
                 await manager.handle_client_message(client_id, message)
-                
+
             except WebSocketDisconnect:
                 logger.info(f"Client {client_id} disconnected normally")
                 break
@@ -112,7 +119,7 @@ async def websocket_price_feed(
                 logger.error(f"Error handling message from client {client_id}: {e}")
                 # Continue processing other messages
                 continue
-    
+
     except WebSocketDisconnect:
         logger.info(f"Client {client_id} disconnected during handshake")
     except Exception as e:
@@ -137,7 +144,7 @@ async def get_websocket_stats(
     """
     try:
         stats = manager.get_connection_stats()
-        
+
         return WebSocketStatsResponse(
             total_connections=stats["total_connections"],
             is_running=stats["is_running"],
@@ -145,7 +152,7 @@ async def get_websocket_stats(
             cached_tickers=stats["cached_tickers"],
             connections=stats["connections"]
         )
-        
+
     except Exception as e:
         logger.error(f"Error getting WebSocket stats: {e}")
         raise HTTPException(
@@ -173,38 +180,38 @@ async def test_broadcast(
     """
     try:
         from app.services.websocket_service import ConnectionInfo
-        
+
         test_message = ConnectionInfo(
             status="test",
             message=message,
             timestamp=f"{manager.get_connection_stats()['total_connections']} clients"
         )
-        
+
         # Broadcast to all clients
         stats = manager.get_connection_stats()
         connections_count = stats["total_connections"]
-        
+
         if connections_count == 0:
             return {
                 "success": True,
                 "message": "No clients connected to broadcast to",
                 "connections": 0
             }
-        
+
         # Send test message to all clients
         for client_id in list(manager.connections.keys()):
             try:
                 await manager._send_to_client(client_id, test_message)
             except Exception as e:
                 logger.warning(f"Failed to send test message to client {client_id}: {e}")
-        
+
         return {
             "success": True,
             "message": f"Test message broadcasted to {connections_count} clients",
             "connections": connections_count,
             "test_message": message
         }
-        
+
     except Exception as e:
         logger.error(f"Error in test broadcast: {e}")
         raise HTTPException(
@@ -229,20 +236,20 @@ async def force_price_update(
     try:
         stats = manager.get_connection_stats()
         connections_count = stats["total_connections"]
-        
+
         if connections_count == 0:
             return {
                 "success": True,
                 "message": "No clients connected to update",
                 "connections": 0
             }
-        
+
         # Force fetch current price
         quote_response = await manager.market_service.get_spy_quote()
-        
+
         # Create price update
         from app.services.websocket_service import PriceUpdate
-        
+
         price_update = PriceUpdate(
             ticker=quote_response.ticker,
             price=quote_response.price,
@@ -255,10 +262,10 @@ async def force_price_update(
             timestamp=quote_response.timestamp,
             cached=quote_response.cached
         )
-        
+
         # Broadcast the update
         await manager.broadcast_price_update("SPY", price_update)
-        
+
         return {
             "success": True,
             "message": f"Price update forced to {connections_count} clients",
@@ -268,7 +275,7 @@ async def force_price_update(
             "market_status": quote_response.market_status,
             "cached": quote_response.cached
         }
-        
+
     except Exception as e:
         logger.error(f"Error forcing price update: {e}")
         raise HTTPException(

@@ -8,22 +8,22 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.services.scheduler_service import SchedulerService
-from app.services.spread_selection_service import SpreadSelectionService
-from app.services.black_scholes_calculator import BlackScholesCalculator
-from app.services.market_service import MarketDataService
-from app.services.sentiment_calculator import SentimentCalculator
-from app.services.polygon_client import PolygonClient
-from app.services.cache import MarketDataCache
-from app.services.rate_limiter import RateLimiter
 from app.config import settings
+from app.services.black_scholes_calculator import BlackScholesCalculator
+from app.services.cache import MarketDataCache
+from app.services.market_service import MarketDataService
+from app.services.polygon_client import PolygonClient
+from app.services.rate_limiter import RateLimiter
+from app.services.scheduler_service import SchedulerService
+from app.services.sentiment_calculator import SentimentCalculator
+from app.services.spread_selection_service import SpreadSelectionService
 
 router = APIRouter()
 
 
 class ManualScanRequest(BaseModel):
     """Request model for triggering manual scans."""
-    
+
     account_size: float = Field(
         default=100000.0,
         ge=10000,
@@ -34,7 +34,7 @@ class ManualScanRequest(BaseModel):
 
 class ScanResultResponse(BaseModel):
     """Response model for scan results."""
-    
+
     success: bool
     scan_time: datetime
     account_size: float
@@ -46,7 +46,7 @@ class ScanResultResponse(BaseModel):
 
 class SchedulerStatusResponse(BaseModel):
     """Response model for scheduler status."""
-    
+
     status: str
     jobs: list[dict[str, Any]]
     timezone: str
@@ -58,26 +58,26 @@ def get_scheduler_service() -> SchedulerService:
     """Create and return configured scheduler service."""
     # Create dependencies with proper initialization
     black_scholes = BlackScholesCalculator()
-    
+
     # Initialize market data dependencies
     polygon_client = PolygonClient(
-        api_key=settings.polygon_api_key, 
+        api_key=settings.polygon_api_key,
         use_sandbox=settings.polygon_use_sandbox
     )
     cache = MarketDataCache(max_size=1000)
     rate_limiter = RateLimiter(requests_per_minute=settings.polygon_rate_limit)
-    
+
     # Initialize services with dependencies
     market_service = MarketDataService(polygon_client, cache, rate_limiter)
     sentiment_calculator = SentimentCalculator(market_service, cache)
-    
+
     # Create spread selection service
     spread_service = SpreadSelectionService(
         black_scholes_calculator=black_scholes,
         market_service=market_service,
         sentiment_calculator=sentiment_calculator
     )
-    
+
     # Create and return scheduler service
     return SchedulerService(spread_selection_service=spread_service)
 
@@ -95,14 +95,14 @@ async def get_scheduler_status(
     try:
         status_info = scheduler_service.get_status()
         next_scan_time = scheduler_service.get_next_scan_time()
-        
+
         return SchedulerStatusResponse(
             status=status_info["status"],
             jobs=status_info["jobs"],
             timezone=status_info["timezone"],
             next_scan_time=next_scan_time
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -123,7 +123,7 @@ async def start_scheduler(
     try:
         await scheduler_service.start_scheduler()
         return {"message": "Scheduler started successfully"}
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -144,7 +144,7 @@ async def stop_scheduler(
     try:
         await scheduler_service.stop_scheduler()
         return {"message": "Scheduler stopped successfully"}
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -173,7 +173,7 @@ async def trigger_manual_scan(
         result = await scheduler_service.trigger_manual_scan(
             account_size=request.account_size
         )
-        
+
         return ScanResultResponse(
             success=result["success"],
             scan_time=result["scan_time"],
@@ -183,7 +183,7 @@ async def trigger_manual_scan(
             error=result.get("error"),
             metrics=result.get("metrics")
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -208,7 +208,7 @@ async def get_scan_history(
     """
     # TODO: Implement database query to get scan history
     # This would query the MorningScanResult table with filtering
-    
+
     return {
         "message": "Scan history endpoint - to be implemented",
         "limit": limit,
@@ -227,7 +227,7 @@ async def get_latest_scan() -> dict[str, Any]:
     """
     # TODO: Implement database query to get latest scan
     # This would query the MorningScanResult table ordered by scan_time DESC
-    
+
     return {
         "message": "Latest scan endpoint - to be implemented",
         "result": None

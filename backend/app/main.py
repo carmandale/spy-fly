@@ -7,14 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 from app.config import settings
 from app.core.database import Base, engine
-from app.services.scheduler_service import SchedulerService
-from app.services.spread_selection_service import SpreadSelectionService
 from app.services.black_scholes_calculator import BlackScholesCalculator
-from app.services.market_service import MarketDataService
-from app.services.sentiment_calculator import SentimentCalculator
-from app.services.polygon_client import PolygonClient
 from app.services.cache import MarketDataCache
+from app.services.market_service import MarketDataService
+from app.services.polygon_client import PolygonClient
 from app.services.rate_limiter import RateLimiter
+from app.services.scheduler_service import SchedulerService
+from app.services.sentiment_calculator import SentimentCalculator
+from app.services.spread_selection_service import SpreadSelectionService
 
 logger = logging.getLogger(__name__)
 
@@ -33,52 +33,52 @@ async def lifespan(app: FastAPI):
     Handles scheduler initialization and cleanup.
     """
     global scheduler_service
-    
+
     # Startup
     try:
         logger.info("Starting SPY-FLY application...")
-        
+
         # Initialize services with proper dependency injection
         black_scholes = BlackScholesCalculator()
-        
+
         # Initialize market data dependencies
         polygon_client = PolygonClient(
-            api_key=settings.polygon_api_key, 
+            api_key=settings.polygon_api_key,
             use_sandbox=settings.polygon_use_sandbox
         )
         cache = MarketDataCache(max_size=1000)
         rate_limiter = RateLimiter(requests_per_minute=settings.polygon_rate_limit)
-        
+
         # Initialize market service with dependencies
         market_service = MarketDataService(polygon_client, cache, rate_limiter)
         sentiment_calculator = SentimentCalculator(market_service, cache)
-        
+
         spread_service = SpreadSelectionService(
             black_scholes_calculator=black_scholes,
             market_service=market_service,
             sentiment_calculator=sentiment_calculator
         )
-        
+
         # Initialize and start scheduler
         scheduler_service = SchedulerService(spread_selection_service=spread_service)
         await scheduler_service.start_scheduler()
-        
+
         logger.info("Morning scan scheduler started successfully - next scan at 9:45 AM ET")
-        
+
     except Exception as e:
         logger.error(f"Failed to start scheduler during application startup: {e}")
         # Don't crash the app if scheduler fails - it can be started manually via API
-    
+
     yield
-    
+
     # Shutdown
     try:
         logger.info("Shutting down SPY-FLY application...")
-        
+
         if scheduler_service:
             await scheduler_service.stop_scheduler()
             logger.info("Scheduler stopped successfully")
-            
+
     except Exception as e:
         logger.error(f"Error during application shutdown: {e}")
 
