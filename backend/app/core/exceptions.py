@@ -31,3 +31,9 @@ class MarketDataError(AppException):
     """Raised when market data cannot be retrieved."""
 
     pass
+
+
+class ServiceError(AppException):
+    """Raised when a service operation fails."""
+
+    pass

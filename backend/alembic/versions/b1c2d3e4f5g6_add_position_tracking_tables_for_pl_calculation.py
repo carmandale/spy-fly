@@ -84,27 +84,8 @@ def upgrade() -> None:
     op.create_index('ix_positions_status', 'positions', ['status'])
     op.create_index('ix_positions_entry_date', 'positions', ['entry_date'])
     
-    # Add check constraints for positions table
-    op.create_check_constraint(
-        'check_position_status',
-        'positions',
-        sa.text("status IN ('open', 'closed', 'expired', 'assigned')")
-    )
-    op.create_check_constraint(
-        'check_position_type',
-        'positions',
-        sa.text("position_type IN ('bull_call_spread', 'bear_put_spread')")
-    )
-    op.create_check_constraint(
-        'check_positive_contracts',
-        'positions',
-        sa.text("contracts > 0")
-    )
-    op.create_check_constraint(
-        'check_positive_cost',
-        'positions',
-        sa.text("entry_total_cost > 0")
-    )
+    # Note: Check constraints removed for SQLite compatibility
+    # Application-level validation will handle data integrity
     
     # Create position_pl_snapshots table
     op.create_table(
@@ -159,32 +140,8 @@ def upgrade() -> None:
     op.create_index('idx_snapshot_alert', 'position_pl_snapshots', ['alert_triggered', 'alert_type'])
     op.create_index('ix_position_pl_snapshots_position_id', 'position_pl_snapshots', ['position_id'])
     
-    # Add check constraints for position_pl_snapshots table
-    op.create_check_constraint(
-        'check_market_session',
-        'position_pl_snapshots',
-        sa.text("market_session IN ('pre_market', 'regular', 'after_hours', 'closed')")
-    )
-    op.create_check_constraint(
-        'check_alert_type',
-        'position_pl_snapshots',
-        sa.text("alert_type IN ('profit_target', 'stop_loss', 'time_decay', 'unusual_movement') OR alert_type IS NULL")
-    )
-    op.create_check_constraint(
-        'check_positive_time_to_expiry',
-        'position_pl_snapshots',
-        sa.text("time_to_expiry_hours >= 0")
-    )
-    op.create_check_constraint(
-        'check_quality_score_min',
-        'position_pl_snapshots',
-        sa.text("data_quality_score >= 0")
-    )
-    op.create_check_constraint(
-        'check_quality_score_max',
-        'position_pl_snapshots',
-        sa.text("data_quality_score <= 100")
-    )
+    # Note: Check constraints removed for SQLite compatibility
+    # Application-level validation will handle data integrity
     
     # Add unique constraint for position_pl_snapshots
     op.create_unique_constraint(
@@ -227,27 +184,8 @@ def upgrade() -> None:
     op.create_index('idx_alert_delivery_status', 'pl_alerts', ['delivery_status'])
     op.create_index('idx_alert_created', 'pl_alerts', ['created_at'])
     
-    # Add check constraints for pl_alerts table
-    op.create_check_constraint(
-        'check_alert_type',
-        'pl_alerts',
-        sa.text("alert_type IN ('profit_target', 'stop_loss', 'time_decay', 'unusual_movement', 'expiration_warning')")
-    )
-    op.create_check_constraint(
-        'check_alert_level',
-        'pl_alerts',
-        sa.text("alert_level IN ('info', 'warning', 'critical')")
-    )
-    op.create_check_constraint(
-        'check_delivery_method',
-        'pl_alerts',
-        sa.text("delivery_method IN ('websocket', 'email', 'browser', 'multiple')")
-    )
-    op.create_check_constraint(
-        'check_delivery_status',
-        'pl_alerts',
-        sa.text("delivery_status IN ('pending', 'sent', 'failed', 'retry')")
-    )
+    # Note: Check constraints removed for SQLite compatibility
+    # Application-level validation will handle data integrity
 
 
 def downgrade() -> None:
