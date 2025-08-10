@@ -1,8 +1,7 @@
 import React from 'react'
-import { Toast } from './Toast'
-import type { ToastProps } from './Toast'
+import { Toast, type ToastProps } from './Toast'
 
-export type ToastData = Omit<ToastProps, 'onClose'>
+export interface ToastData extends Omit<ToastProps, 'onClose'> {}
 
 interface ToastContainerProps {
 	toasts: ToastData[]
