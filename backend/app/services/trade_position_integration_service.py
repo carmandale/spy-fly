@@ -61,7 +61,7 @@ class TradePositionIntegrationService:
         mapper: Optional[TradeToPositionMapper] = None
     ):
         self.db = db
-        self.market_service = market_service or MarketDataService()
+        self.market_service = market_service or _create_market_service()
         self.mapper = mapper or TradeToPositionMapper()
         
     async def create_position_from_trade(self, trade: Trade) -> Optional[Position]:
