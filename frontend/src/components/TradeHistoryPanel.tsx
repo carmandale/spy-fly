@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { apiClient, Trade, TradeSummary } from '../api/client'
+import { apiClient } from '../api/client'
+import type { Trade, TradeSummary } from '../api/client'
 
 interface TradeHistoryPanelProps {
   refreshTrigger?: number
