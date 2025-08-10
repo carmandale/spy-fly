@@ -466,7 +466,7 @@ async def get_current_pl(
         raise HTTPException(status_code=400, detail="Can only calculate P/L for open positions")
     
     # Initialize services (in a real app, these would be injected)
-    market_service = MarketDataService()
+    market_service = _get_market_service()
     bs_calculator = BlackScholesCalculator()
     pl_service = PLCalculationService(market_service, bs_calculator)
     
@@ -488,7 +488,7 @@ async def get_portfolio_pl(
     Returns aggregated P/L data for all open positions.
     """
     # Initialize services (in a real app, these would be injected)
-    market_service = MarketDataService()
+    market_service = _get_market_service()
     bs_calculator = BlackScholesCalculator()
     pl_service = PLCalculationService(market_service, bs_calculator)
     
