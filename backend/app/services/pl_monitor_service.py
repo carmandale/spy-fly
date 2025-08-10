@@ -44,7 +44,7 @@ class PLMonitorService:
         self.websocket_manager = websocket_manager
         
         # Configuration
-        self.snapshot_interval = 300  # 5 minutes between snapshots
+        self.snapshot_interval = 900  # 15 minutes between snapshots (as per roadmap spec)
         self.alert_check_interval = 60  # 1 minute between alert checks
         self.cleanup_interval = 3600  # 1 hour between cleanup tasks
         
