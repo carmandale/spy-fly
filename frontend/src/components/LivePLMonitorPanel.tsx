@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from 'recharts'
 import { TrendingUp, Clock, AlertCircle, RefreshCw, Activity } from 'lucide-react'
-import { positionsApi, PortfolioPL, Position, PositionsApiError } from '../services/positionsApi'
-import { PortfolioPLUpdate } from '../hooks/useWebSocket'
+import { positionsApi, PositionsApiError } from '../services/positionsApi'
+import type { PortfolioPL, Position } from '../services/positionsApi'
+import type { PortfolioPLUpdate } from '../hooks/useWebSocket'
 interface PLData {
   currentValue: number
   entryValue: number
