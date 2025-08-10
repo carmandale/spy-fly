@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { apiClient, Trade, TradeSpread } from '../api/client'
+import { apiClient } from '../api/client'
+import type { Trade, TradeSpread } from '../api/client'
 
 interface TradeInputPanelProps {
   onTradeCreated?: () => void
