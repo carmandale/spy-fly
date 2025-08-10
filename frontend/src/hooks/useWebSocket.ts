@@ -22,6 +22,52 @@ export interface PriceUpdate {
   cached: boolean
 }
 
+export interface PLUpdate {
+  type: 'pl_update'
+  position_id: number
+  symbol: string
+  contracts: number
+  unrealized_pnl: number
+  unrealized_pnl_percent: number
+  current_total_value: number
+  entry_total_cost: number
+  position_delta?: number
+  position_theta?: number
+  daily_theta_decay?: number
+  alert_triggered: boolean
+  alert_type?: string
+  alert_message?: string
+  current_spy_price: number
+  market_session: string
+  timestamp: string
+}
+
+export interface PortfolioPLUpdate {
+  type: 'portfolio_pl_update'
+  total_positions: number
+  total_unrealized_pnl: number
+  total_unrealized_pnl_percent: number
+  total_daily_theta: number
+  current_spy_price: number
+  timestamp: string
+  positions: Array<{
+    position_id: number
+    symbol: string
+    contracts: number
+    unrealized_pnl: number
+    unrealized_pnl_percent: number
+    current_total_value: number
+    entry_total_cost: number
+    position_delta?: number
+    position_theta?: number
+    daily_theta_decay?: number
+    alert_triggered: boolean
+    alert_type?: string
+    alert_message?: string
+    market_session: string
+  }>
+}
+
 export interface ConnectionStatus {
   type: 'connection_status'
   status: 'connected' | 'disconnected' | 'error'
@@ -29,7 +75,7 @@ export interface ConnectionStatus {
   timestamp: string
 }
 
-export type WebSocketMessage = PriceUpdate | ConnectionStatus
+export type WebSocketMessage = PriceUpdate | PLUpdate | PortfolioPLUpdate | ConnectionStatus
 
 export interface UseWebSocketOptions {
   url?: string
@@ -47,6 +93,8 @@ export interface UseWebSocketReturn {
   
   // Latest data
   latestPrice: PriceUpdate | null
+  latestPLUpdate: PLUpdate | null
+  latestPortfolioPL: PortfolioPLUpdate | null
   connectionInfo: ConnectionStatus | null
   
   // Connection control
@@ -80,6 +128,8 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
   
   // Latest data
   const [latestPrice, setLatestPrice] = useState<PriceUpdate | null>(null)
+  const [latestPLUpdate, setLatestPLUpdate] = useState<PLUpdate | null>(null)
+  const [latestPortfolioPL, setLatestPortfolioPL] = useState<PortfolioPLUpdate | null>(null)
   const [connectionInfo, setConnectionInfo] = useState<ConnectionStatus | null>(null)
   
   // Refs for managing WebSocket and timers
@@ -120,6 +170,16 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
       
       if (message.type === 'price_update') {
         setLatestPrice(message)
+      } else if (message.type === 'pl_update') {
+        setLatestPLUpdate(message)
+        
+        // Show alert notifications for position alerts
+        if (message.alert_triggered && message.alert_message) {
+          const alertType = message.alert_type === 'stop_loss' ? 'error' : 'warning'
+          toast[alertType](`Position Alert: ${message.alert_message}`)
+        }
+      } else if (message.type === 'portfolio_pl_update') {
+        setLatestPortfolioPL(message)
       } else if (message.type === 'connection_status') {
         setConnectionInfo(message)
         
@@ -275,6 +335,8 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
     
     // Latest data
     latestPrice,
+    latestPLUpdate,
+    latestPortfolioPL,
     connectionInfo,
     
     // Connection control
