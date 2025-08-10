@@ -86,7 +86,8 @@
       "Bash(bash:*)",
       "Bash(git --git-dir=/Users/dalecarman/Groove Jones Dropbox/Dale Carman/Projects/dev/spy-fly/.git --work-tree=/Users/dalecarman/Groove Jones Dropbox/Dale Carman/Projects/dev/spy-fly add backend/tests/unit/test_scheduler_service.py)",
       "Bash(cd:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }
