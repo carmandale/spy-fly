@@ -317,8 +317,10 @@ Probability: ${spreadData.probability}%`
                             <div className="mt-2">
                               <CopyButton
                                 text={generateOrderText()}
-                                label="Copy Order Details"
+                                buttonText="Copy Order Details"
                                 onCopy={() => handleItemToggle('copy-order')}
+                                size="sm"
+                                variant="outline"
                               />
                             </div>
                           )}
