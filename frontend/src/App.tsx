@@ -11,14 +11,6 @@ function App() {
       </Routes>
     </Router>
   )
-  // return (
-  //   <Router>
-  //     <Routes>
-  //       <Route path="/" element={<Dashboard />} />
-  //       <Route path="/execute/:recommendationId" element={<ExecutionPage />} />
-  //     </Routes>
-  //   </Router>
-  // )
 }
 
 export default App
