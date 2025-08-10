@@ -24,8 +24,10 @@ logger = logging.getLogger(__name__)
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-# Global scheduler service instance
+# Global service instances
 scheduler_service: SchedulerService | None = None
+pl_monitor_service: PLMonitorService | None = None
+websocket_manager: WebSocketManager | None = None
 
 
 @asynccontextmanager
