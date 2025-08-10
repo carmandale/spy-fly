@@ -235,7 +235,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
       setConnectionError('Max reconnection attempts reached')
       toast.error('Lost connection to price feed - please refresh to reconnect')
     }
-  }, [reconnectAttempts, config.reconnectAttempts, config.reconnectInterval, clearTimers, toast, connect])
+  }, [reconnectAttempts, config.reconnectAttempts, config.reconnectInterval, clearTimers, toast])
   
   // Handle WebSocket errors
   const handleError = useCallback((event: Event) => {
