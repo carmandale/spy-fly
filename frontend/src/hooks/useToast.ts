@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
-import { ToastData } from '../components/ui/ToastContainer'
+import type { ToastProps } from '../components/ui/Toast'
+
+type ToastData = Omit<ToastProps, 'onClose'>
 
 export const useToast = () => {
 	const [toasts, setToasts] = useState<ToastData[]>([])
