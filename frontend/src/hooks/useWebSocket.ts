@@ -137,6 +137,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const heartbeatIntervalRef = useRef<NodeJS.Interval | null>(null)
   const mountedRef = useRef(true)
+  const connectRef = useRef<(() => void) | null>(null)
   
   // Clear all timers
   const clearTimers = useCallback(() => {
@@ -226,9 +227,9 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
       setReconnectAttempts(prev => prev + 1)
       
       reconnectTimeoutRef.current = setTimeout(() => {
-        if (mountedRef.current) {
+        if (mountedRef.current && connectRef.current) {
           console.log(`Attempting WebSocket reconnection (${reconnectAttempts + 1}/${config.reconnectAttempts})`)
-          connect()
+          connectRef.current()
         }
       }, config.reconnectInterval)
     } else if (reconnectAttempts >= config.reconnectAttempts) {
@@ -280,6 +281,9 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
       }
     }
   }, [config.url, handleOpen, handleClose, handleError, handleMessage, toast])
+  
+  // Store connect function in ref for use in callbacks
+  connectRef.current = connect
   
   // Disconnect from WebSocket
   const disconnect = useCallback(() => {
