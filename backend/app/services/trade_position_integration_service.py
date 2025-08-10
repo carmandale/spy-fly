@@ -18,6 +18,10 @@ from app.models.trading import Trade, TradeSpread
 from app.models.position import Position
 from app.services.trade_to_position_mapper import TradeToPositionMapper
 from app.services.market_service import MarketDataService
+from app.services.polygon_client import PolygonClient
+from app.services.cache import MarketDataCache
+from app.services.rate_limiter import RateLimiter
+from app.config import settings
 from app.core.exceptions import ServiceError
 
 logger = logging.getLogger(__name__)
