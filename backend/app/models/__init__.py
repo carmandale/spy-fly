@@ -36,6 +36,11 @@ from app.models.trading import (
     Trade,
     TradeSpread,
 )
+from app.models.position import (
+    PLAlert,
+    Position,
+    PositionPLSnapshot,
+)
 
 __all__ = [
     # Pydantic models
@@ -66,4 +71,8 @@ __all__ = [
     "TradeSpread",
     "Configuration",
     "DailySummary",
+    # Position models
+    "Position",
+    "PositionPLSnapshot",
+    "PLAlert",
 ]
