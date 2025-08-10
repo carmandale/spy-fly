@@ -24,6 +24,18 @@ from app.config import settings
 
 router = APIRouter()
 
+
+def _get_market_service() -> MarketDataService:
+    """Helper function to create properly initialized MarketDataService."""
+    polygon_client = PolygonClient(
+        api_key=settings.polygon_api_key, 
+        use_sandbox=settings.polygon_use_sandbox
+    )
+    cache = MarketDataCache(max_size=1000)
+    rate_limiter = RateLimiter(requests_per_minute=settings.polygon_rate_limit)
+    return MarketDataService(polygon_client, cache, rate_limiter)
+
+
 # Pydantic models for API requests/responses
 
 class PositionCreate(BaseModel):
