@@ -17,6 +17,9 @@ from app.services.rate_limiter import RateLimiter
 from app.services.scheduler_service import SchedulerService
 from app.services.sentiment_calculator import SentimentCalculator
 from app.services.spread_selection_service import SpreadSelectionService
+from app.services.pl_calculation_service import PLCalculationService
+from app.services.pl_monitor_service import PLMonitorService
+from app.services.websocket_service import WebSocketManager
 
 router = APIRouter()
 
@@ -232,3 +235,125 @@ async def get_latest_scan() -> dict[str, Any]:
         "message": "Latest scan endpoint - to be implemented",
         "result": None
     }
+
+
+# P/L Monitor endpoints
+
+@router.get("/pl-monitor/status")
+async def get_pl_monitor_status() -> dict[str, Any]:
+    """
+    Get current P/L monitoring service status.
+    
+    Returns:
+        Status information including whether service is running,
+        snapshot interval, and last snapshot time.
+    """
+    from app.main import pl_monitor_service
+    
+    if not pl_monitor_service:
+        return {
+            "status": "not_initialized",
+            "is_running": False,
+            "snapshot_interval": None,
+            "alert_check_interval": None
+        }
+    
+    return {
+        "status": "running" if pl_monitor_service.is_running else "stopped",
+        "is_running": pl_monitor_service.is_running,
+        "snapshot_interval": pl_monitor_service.snapshot_interval,
+        "alert_check_interval": pl_monitor_service.alert_check_interval,
+        "cleanup_interval": pl_monitor_service.cleanup_interval
+    }
+
+
+@router.post("/pl-monitor/start")
+async def start_pl_monitor() -> dict[str, str]:
+    """
+    Start the P/L monitoring service.
+    
+    This will begin periodic P/L snapshot calculation and storage.
+    """
+    from app.main import pl_monitor_service
+    
+    if not pl_monitor_service:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="P/L monitoring service not initialized"
+        )
+    
+    if pl_monitor_service.is_running:
+        return {"message": "P/L monitoring service is already running"}
+    
+    try:
+        await pl_monitor_service.start()
+        return {"message": "P/L monitoring service started successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start P/L monitoring: {str(e)}"
+        )
+
+
+@router.post("/pl-monitor/stop")
+async def stop_pl_monitor() -> dict[str, str]:
+    """
+    Stop the P/L monitoring service.
+    
+    This will stop all background P/L calculation tasks.
+    """
+    from app.main import pl_monitor_service
+    
+    if not pl_monitor_service:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="P/L monitoring service not initialized"
+        )
+    
+    if not pl_monitor_service.is_running:
+        return {"message": "P/L monitoring service is not running"}
+    
+    try:
+        await pl_monitor_service.stop()
+        return {"message": "P/L monitoring service stopped successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to stop P/L monitoring: {str(e)}"
+        )
+
+
+@router.post("/pl-monitor/force-snapshot")
+async def force_pl_snapshot() -> dict[str, Any]:
+    """
+    Force an immediate P/L snapshot calculation.
+    
+    This bypasses the normal 15-minute interval and immediately
+    calculates and stores P/L snapshots for all open positions.
+    """
+    from app.main import pl_monitor_service
+    
+    if not pl_monitor_service:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="P/L monitoring service not initialized"
+        )
+    
+    if not pl_monitor_service.is_running:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="P/L monitoring service must be running to force snapshots"
+        )
+    
+    try:
+        # Call the internal snapshot method directly
+        await pl_monitor_service._store_pl_snapshots()
+        return {
+            "message": "P/L snapshot forced successfully",
+            "next_scheduled_snapshot": "In 15 minutes"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to force P/L snapshot: {str(e)}"
+        )
