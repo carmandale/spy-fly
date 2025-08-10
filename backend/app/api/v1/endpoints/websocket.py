@@ -14,6 +14,7 @@ from app.services.market_service import MarketDataService
 from app.services.polygon_client import PolygonClient
 from app.services.cache import MarketDataCache
 from app.services.rate_limiter import RateLimiter
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
