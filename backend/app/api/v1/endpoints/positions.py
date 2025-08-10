@@ -17,6 +17,10 @@ from app.models.position import Position, PositionPLSnapshot, PLAlert
 from app.services.pl_calculation_service import PLCalculationService
 from app.services.market_service import MarketDataService
 from app.services.black_scholes_calculator import BlackScholesCalculator
+from app.services.polygon_client import PolygonClient
+from app.services.cache import MarketDataCache
+from app.services.rate_limiter import RateLimiter
+from app.config import settings
 
 router = APIRouter()
 
