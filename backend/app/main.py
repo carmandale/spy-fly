@@ -35,9 +35,9 @@ async def lifespan(app: FastAPI):
     """
     Application lifespan manager for startup and shutdown tasks.
     
-    Handles scheduler initialization and cleanup.
+    Handles scheduler, P/L monitoring, and WebSocket initialization and cleanup.
     """
-    global scheduler_service
+    global scheduler_service, pl_monitor_service, websocket_manager
 
     # Startup
     try:
@@ -70,6 +70,26 @@ async def lifespan(app: FastAPI):
 
         logger.info("Morning scan scheduler started successfully - next scan at 9:45 AM ET")
 
+        # Initialize P/L monitoring service
+        pl_calculation_service = PLCalculationService(
+            market_service=market_service,
+            black_scholes_calculator=black_scholes
+        )
+        
+        # Initialize WebSocket manager for real-time updates
+        websocket_manager = WebSocketManager(market_service=market_service)
+        
+        # Initialize and start P/L monitor with 15-minute intervals
+        pl_monitor_service = PLMonitorService(
+            pl_calculation_service=pl_calculation_service,
+            websocket_manager=websocket_manager
+        )
+        # Configure 15-minute snapshot interval (900 seconds)
+        pl_monitor_service.snapshot_interval = 900  # 15 minutes
+        await pl_monitor_service.start()
+        
+        logger.info("P/L monitoring service started - snapshots every 15 minutes")
+
     except Exception as e:
         logger.error(f"Failed to start scheduler during application startup: {e}")
         # Don't crash the app if scheduler fails - it can be started manually via API
@@ -83,6 +103,10 @@ async def lifespan(app: FastAPI):
         if scheduler_service:
             await scheduler_service.stop_scheduler()
             logger.info("Scheduler stopped successfully")
+        
+        if pl_monitor_service:
+            await pl_monitor_service.stop()
+            logger.info("P/L monitoring service stopped successfully")
 
     except Exception as e:
         logger.error(f"Error during application shutdown: {e}")
