@@ -3,8 +3,11 @@ import Dashboard from './components/Dashboard'
 import ExecutionPage from './pages/ExecutionPage'
 
 function App() {
+  // Use base URL from environment for GitHub Pages compatibility
+  const basename = import.meta.env.BASE_URL || '/'
+  
   return (
-    <Router>
+    <Router basename={basename}>
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/execution" element={<ExecutionPage />} />
