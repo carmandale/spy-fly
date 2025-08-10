@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SPY-FLY Trading Tool</title>
+    <script>
+      // GitHub Pages SPA redirect workaround
+      // This script redirects 404s to the main index.html with the path as a query parameter
+      const path = window.location.pathname;
+      const base = '/spy-fly/';
+      
+      // Only redirect if we're on GitHub Pages (has base path)
+      if (path.startsWith(base) && path !== base) {
+        const route = path.slice(base.length);
+        window.location.replace(base + '?p=' + route);
+      }
+    </script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div>Redirecting...</div>
+  </body>
+</html>
