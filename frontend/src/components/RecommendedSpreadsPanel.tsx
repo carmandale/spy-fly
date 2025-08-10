@@ -1,6 +1,7 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Copy, TrendingUp, Target, AlertTriangle } from 'lucide-react'
+import { Copy, TrendingUp, Target, AlertTriangle, Send } from 'lucide-react'
 interface SpreadRecommendation {
   id: string
   longStrike: number
@@ -17,6 +18,7 @@ interface RecommendedSpreadsPanelProps {
   recommendations: SpreadRecommendation[]
 }
 const RecommendedSpreadsPanel: React.FC<RecommendedSpreadsPanelProps> = ({ recommendations }) => {
+  const navigate = useNavigate()
   const copyToClipboard = (spread: SpreadRecommendation) => {
     const orderDetails = `
 SPY Bull Call Spread (${spread.expiration})
@@ -132,22 +134,40 @@ Probability: ${spread.probability}%
                       Qty: <strong>{spread.quantity}</strong>
                     </span>
                   </div>
-                  <motion.button
-                    onClick={() => copyToClipboard(spread)}
-                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 
-                             text-white px-3 py-1 rounded text-sm font-medium transition-colors
-                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-                    whileHover={{
-                      scale: 1.05,
-                    }}
-                    whileTap={{
-                      scale: 0.95,
-                    }}
-                    aria-label={`Copy order details for ${spread.longStrike}/${spread.shortStrike} spread`}
-                  >
-                    <Copy className="w-4 h-4" aria-hidden="true" />
-                    <span>Copy Order</span>
-                  </motion.button>
+                  <div className="flex space-x-2">
+                    <motion.button
+                      onClick={() => copyToClipboard(spread)}
+                      className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 
+                               text-white px-3 py-1 rounded text-sm font-medium transition-colors
+                               focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                      whileHover={{
+                        scale: 1.05,
+                      }}
+                      whileTap={{
+                        scale: 0.95,
+                      }}
+                      aria-label={`Copy order details for ${spread.longStrike}/${spread.shortStrike} spread`}
+                    >
+                      <Copy className="w-4 h-4" aria-hidden="true" />
+                      <span>Copy</span>
+                    </motion.button>
+                    <motion.button
+                      onClick={() => navigate(`/execute/${spread.id}`)}
+                      className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 
+                               text-white px-3 py-1 rounded text-sm font-medium transition-colors
+                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                      whileHover={{
+                        scale: 1.05,
+                      }}
+                      whileTap={{
+                        scale: 0.95,
+                      }}
+                      aria-label={`Execute trade for ${spread.longStrike}/${spread.shortStrike} spread`}
+                    >
+                      <Send className="w-4 h-4" aria-hidden="true" />
+                      <span>Execute</span>
+                    </motion.button>
+                  </div>
                 </div>
               </div>
             </div>
