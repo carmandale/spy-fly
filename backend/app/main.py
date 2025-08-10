@@ -12,6 +12,9 @@ from app.services.spread_selection_service import SpreadSelectionService
 from app.services.black_scholes_calculator import BlackScholesCalculator
 from app.services.market_service import MarketDataService
 from app.services.sentiment_calculator import SentimentCalculator
+from app.services.polygon_client import PolygonClient
+from app.services.cache import MarketDataCache
+from app.services.rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 
