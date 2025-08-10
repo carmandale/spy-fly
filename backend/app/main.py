@@ -38,10 +38,20 @@ async def lifespan(app: FastAPI):
     try:
         logger.info("Starting SPY-FLY application...")
         
-        # Initialize services
+        # Initialize services with proper dependency injection
         black_scholes = BlackScholesCalculator()
-        market_service = MarketDataService()
-        sentiment_calculator = SentimentCalculator()
+        
+        # Initialize market data dependencies
+        polygon_client = PolygonClient(
+            api_key=settings.polygon_api_key, 
+            use_sandbox=settings.polygon_use_sandbox
+        )
+        cache = MarketDataCache(max_size=1000)
+        rate_limiter = RateLimiter(requests_per_minute=settings.polygon_rate_limit)
+        
+        # Initialize market service with dependencies
+        market_service = MarketDataService(polygon_client, cache, rate_limiter)
+        sentiment_calculator = SentimentCalculator(market_service, cache)
         
         spread_service = SpreadSelectionService(
             black_scholes_calculator=black_scholes,
