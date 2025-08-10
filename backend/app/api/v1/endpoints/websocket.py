@@ -44,10 +44,13 @@ def get_websocket_manager() -> WebSocketManager:
     global websocket_manager
     
     if websocket_manager is None:
-        # Create dependencies for market service
-        polygon_client = PolygonClient()
-        cache = MarketDataCache()
-        rate_limiter = RateLimiter()
+        # Create dependencies for market service with proper initialization
+        polygon_client = PolygonClient(
+            api_key=settings.polygon_api_key,
+            use_sandbox=settings.polygon_use_sandbox
+        )
+        cache = MarketDataCache(max_size=1000)
+        rate_limiter = RateLimiter(requests_per_minute=settings.polygon_rate_limit)
         
         market_service = MarketDataService(
             polygon_client=polygon_client,
