@@ -4,7 +4,20 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <title>SPY-FLY Trading Tool</title>
+    <script>
+      // Handle GitHub Pages SPA redirect
+      (function() {
+        // Handle query parameter from 404.html
+        const params = new URLSearchParams(window.location.search);
+        const path = params.get('p');
+        if (path) {
+          // Clean up URL without reload
+          const cleanUrl = window.location.pathname + path;
+          window.history.replaceState(null, null, cleanUrl);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
