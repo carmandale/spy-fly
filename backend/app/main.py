@@ -15,6 +15,9 @@ from app.services.rate_limiter import RateLimiter
 from app.services.scheduler_service import SchedulerService
 from app.services.sentiment_calculator import SentimentCalculator
 from app.services.spread_selection_service import SpreadSelectionService
+from app.services.pl_calculation_service import PLCalculationService
+from app.services.pl_monitor_service import PLMonitorService
+from app.services.websocket_service import WebSocketManager
 
 logger = logging.getLogger(__name__)
 
