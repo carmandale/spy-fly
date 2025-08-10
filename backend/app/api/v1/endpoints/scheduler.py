@@ -56,10 +56,20 @@ class SchedulerStatusResponse(BaseModel):
 # Dependency to get scheduler service
 def get_scheduler_service() -> SchedulerService:
     """Create and return configured scheduler service."""
-    # Create dependencies
+    # Create dependencies with proper initialization
     black_scholes = BlackScholesCalculator()
-    market_service = MarketDataService()
-    sentiment_calculator = SentimentCalculator()
+    
+    # Initialize market data dependencies
+    polygon_client = PolygonClient(
+        api_key=settings.polygon_api_key, 
+        use_sandbox=settings.polygon_use_sandbox
+    )
+    cache = MarketDataCache(max_size=1000)
+    rate_limiter = RateLimiter(requests_per_minute=settings.polygon_rate_limit)
+    
+    # Initialize services with dependencies
+    market_service = MarketDataService(polygon_client, cache, rate_limiter)
+    sentiment_calculator = SentimentCalculator(market_service, cache)
     
     # Create spread selection service
     spread_service = SpreadSelectionService(
