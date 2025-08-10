@@ -4,7 +4,12 @@ import Dashboard from './components/Dashboard'
 
 function App() {
   console.log('App component rendering')
-  return <Dashboard />
+  return (
+    <div style={{ backgroundColor: 'black', color: 'white', padding: '20px', minHeight: '100vh' }}>
+      <h1>SPY-FLY Dashboard Loading...</h1>
+      <Dashboard />
+    </div>
+  )
   // return (
   //   <Router>
   //     <Routes>
