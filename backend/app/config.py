@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     polygon_cache_ttl_options: int = Field(default=300, gt=0)
     polygon_cache_ttl_historical: int = Field(default=3600, gt=0)
 
+    # Scheduler settings
+    scheduler_enabled: bool = Field(default=True)
+    
     # Sentiment settings
     sentiment_cache_ttl: int = Field(default=300, gt=0)  # 5 minutes
     vix_low_threshold: float = Field(default=16.0, gt=0.0)
