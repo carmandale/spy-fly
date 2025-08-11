@@ -366,18 +366,32 @@ class WebSocketManager:
                 
             except MarketDataError as e:
                 logger.warning(f"Market data error in WebSocket loop: {e}")
-                # Send error notification to clients
-                error_msg = ConnectionInfo(
-                    status="error",
-                    message=f"Market data temporarily unavailable: {str(e)}",
-                    timestamp=datetime.now().isoformat()
-                )
-                
-                for client_id in list(self.connections.keys()):
-                    try:
-                        await self._send_to_client(client_id, error_msg)
-                    except Exception:
-                        pass  # Client will be cleaned up naturally
+                # Check if this is a rate limit error
+                if "rate limit" in str(e).lower():
+                    # For rate limits, wait longer before retrying
+                    # Extract wait time from error message if possible
+                    wait_time = 60  # Default wait time
+                    import re
+                    match = re.search(r'wait (\d+) seconds', str(e).lower())
+                    if match:
+                        wait_time = int(match.group(1)) + 1  # Add 1 second buffer
+                    
+                    logger.info(f"Rate limited - waiting {wait_time} seconds before retry")
+                    await asyncio.sleep(wait_time)
+                    continue  # Skip the normal wait and try again
+                else:
+                    # For other errors, send notification to clients
+                    error_msg = ConnectionInfo(
+                        status="error",
+                        message=f"Market data temporarily unavailable: {str(e)}",
+                        timestamp=datetime.now().isoformat()
+                    )
+                    
+                    for client_id in list(self.connections.keys()):
+                        try:
+                            await self._send_to_client(client_id, error_msg)
+                        except Exception:
+                            pass  # Client will be cleaned up naturally
             
             except Exception as e:
                 logger.error(f"Unexpected error in WebSocket price update loop: {e}")
