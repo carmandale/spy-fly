@@ -74,7 +74,7 @@ class PLCalculationService:
         try:
             # Get current market data
             if current_spy_price is None:
-                quote_data = await self.market_service.get_current_quote("SPY")
+                quote_data = await self.market_service.get_spy_quote()
                 current_spy_price = float(quote_data.price)
             
             # Calculate time to expiry
