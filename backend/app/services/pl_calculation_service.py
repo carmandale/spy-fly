@@ -185,7 +185,7 @@ class PLCalculationService:
         
         if not open_positions:
             # Even with no positions, we need current SPY price for consistent API response
-            quote_data = await self.market_service.get_current_quote("SPY")
+            quote_data = await self.market_service.get_spy_quote()
             current_spy_price = float(quote_data.price)
             
             return {
