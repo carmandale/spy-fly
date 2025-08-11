@@ -110,7 +110,7 @@ export interface UseWebSocketReturn {
 const DEFAULT_OPTIONS: Required<UseWebSocketOptions> = {
   url: 'ws://localhost:8003/api/v1/ws/price-feed',
   reconnectAttempts: 5,
-  reconnectInterval: 3000,
+  reconnectInterval: 15000, // 15 seconds - longer than backend rate limit
   heartbeatInterval: 30000,
   autoConnect: true
 }
