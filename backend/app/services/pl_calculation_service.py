@@ -184,11 +184,17 @@ class PLCalculationService:
         open_positions = db.query(Position).filter(Position.status == "open").all()
         
         if not open_positions:
+            # Even with no positions, we need current SPY price for consistent API response
+            quote_data = await self.market_service.get_current_quote("SPY")
+            current_spy_price = float(quote_data.price)
+            
             return {
                 "total_positions": 0,
                 "total_unrealized_pnl": 0.0,
                 "total_unrealized_pnl_percent": 0.0,
                 "total_daily_theta": 0.0,
+                "current_spy_price": current_spy_price,
+                "calculation_timestamp": datetime.utcnow(),
                 "positions": []
             }
         
