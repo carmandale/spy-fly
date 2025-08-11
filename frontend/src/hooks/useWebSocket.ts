@@ -123,6 +123,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [connectionError, setConnectionError] = useState<string | null>(null)
+  const reconnectAttemptsRef = useRef(0)
   const [reconnectAttempts, setReconnectAttempts] = useState(0)
   const [lastConnected, setLastConnected] = useState<Date | null>(null)
   
