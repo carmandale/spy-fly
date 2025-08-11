@@ -199,7 +199,7 @@ class PLCalculationService:
             }
         
         # Get current SPY price once for all calculations
-        quote_data = await self.market_service.get_current_quote("SPY")
+        quote_data = await self.market_service.get_spy_quote()
         current_spy_price = float(quote_data.price)
         
         portfolio_pnl = 0.0
