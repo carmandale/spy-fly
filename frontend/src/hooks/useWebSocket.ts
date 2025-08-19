@@ -206,6 +206,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
     setIsConnected(true)
     setIsConnecting(false)
     setConnectionError(null)
+    reconnectAttemptsRef.current = 0
     setReconnectAttempts(0)
     setLastConnected(new Date())
     startHeartbeat()
